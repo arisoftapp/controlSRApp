@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ public class Login extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
         if(consultarLogin()==true)
         {
             Intent i=new Intent(contexto,MainActivity.class);
@@ -115,9 +117,9 @@ public class Login extends AppCompatActivity {
                 {
                     validar="OK";
                     mensajeGlobal="";
-                    Boolean success=jObject.getBoolean("success");
+                    String success=jObject.getString("success");
                     JSONArray jArray = jObject.getJSONArray("usuario");
-                    Log.i("login",jArray.getString(0));
+                    //Log.i("login",jArray.getString(0));
                     for (int i=0; i < jArray.length(); i++) //Miramos en todos los objetos del array de objetos results
                     {
                         try {
@@ -132,16 +134,18 @@ public class Login extends AppCompatActivity {
                                 Database admin=new Database(contexto,null,1);
                                 SQLiteDatabase db = admin.getWritableDatabase();
                                 ContentValues r = new ContentValues();
-                                r.put("success","true");
+                                r.put("success",success);
                                 r.put("nomEmpresa",empresa);
                                 r.put("dominio",dominio);
                                 r.put("usuario",usuario);
                                 r.put("id_empresa",id_empresa);
+                                r.put("almacen","");
                                 db.insert("login",null,r);
                                 db.close();
 
-                            }catch (Exception e)
+                            }catch (SQLiteException e)
                             {
+                                Log.e("cargausuario",e.getMessage());
                                 mensajeGlobal="error al insertar login:"+e.getMessage();
                                 validar="false";
                             }
@@ -178,9 +182,11 @@ public class Login extends AppCompatActivity {
             progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
+
                 Intent i=new Intent(contexto,MainActivity.class);
                 startActivity(i);
                 finish();
+                consultatabla();
             }
             else
             {
@@ -201,6 +207,31 @@ public class Login extends AppCompatActivity {
 
     public void mensajes(String mensaje) {
         Toast.makeText(getApplicationContext(),mensaje,Toast.LENGTH_SHORT).show();
+    }
+    public void consultatabla()
+    {
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT * FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaLogin"," | "+fila.getString(0)+
+                            " | "+fila.getString(1)+
+                            " | "+fila.getString(2)+
+                            " | "+fila.getString(3)+
+                            " | "+fila.getString(4)+
+                            " | "+fila.getString(5)
+                            );
+                }while (fila.moveToNext());
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
     }
 
     public boolean consultarLogin()
@@ -225,8 +256,10 @@ public class Login extends AppCompatActivity {
         {
             validarLogin=false;
             Log.e("Error:",""+e.getMessage());
-            //mensajes("Error al buscar diferencias:"+e.getMessage());
+            //mensajes("Error al validar login:"+e.getMessage());
         }
         return validarLogin;
     }
+
+
 }

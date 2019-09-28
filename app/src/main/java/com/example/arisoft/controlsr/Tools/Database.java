@@ -16,11 +16,12 @@ public class Database extends SQLiteOpenHelper {
     public static final String TABLA_ALM = "almacenes";
     public static final String TABLA_ART = "articulos";
 
-    public static final String SQL_LOGIN="CREATE TABLE "+TABLA_LOGIN+"(success boolean ," +
+    public static final String SQL_LOGIN="CREATE TABLE "+TABLA_LOGIN+"(success text ," +
             "nomEmpresa text," +
             "id_empresa text,"+
             "dominio text," +
-            "usuario text)";
+            "usuario text," +
+            "almacen text)";
     public static final String SQL_ALM="CREATE TABLE "+TABLA_ALM+"(cod_alm text ," +
             "almacen text)";
     public static final String SQL_ART="CREATE TABLE "+TABLA_ART+"(codigo text ," +
