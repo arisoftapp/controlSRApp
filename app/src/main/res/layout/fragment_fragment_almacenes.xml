@@ -22,6 +22,8 @@
                 android:layout_height="wrap_content" />
         </LinearLayout>
         <LinearLayout
+            android:layout_marginRight="16dp"
+            android:layout_marginLeft="16dp"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -29,10 +31,10 @@
                 android:text="Almacen Seleccionado:"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-            <EditText
-                android:enabled="false"
-                android:hint="1"
-                android:inputType="number"
+            <TextView
+                android:id="@+id/tv_almacen"
+                android:text="1"
+                android:textAlignment="center"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
@@ -45,11 +47,11 @@
 
             <Spinner
                 android:id="@+id/spinner2"
-                android:layout_width="395dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginLeft="16dp"
-                android:layout_marginTop="74dp"
+                android:layout_marginTop="40dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginRight="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -57,15 +59,18 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <Button
-                android:id="@+id/button2"
-                android:layout_width="wrap_content"
+                android:id="@+id/btn_guardar"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="16dp"
                 android:layout_marginLeft="16dp"
-                android:layout_marginTop="74dp"
+                android:layout_marginTop="40dp"
                 android:layout_marginEnd="16dp"
                 android:layout_marginRight="16dp"
+                android:textSize="30dp"
+                android:textColor="#fff"
                 android:text="Guardar"
+                android:background="@drawable/boton_redondeado_verde"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/spinner2" />

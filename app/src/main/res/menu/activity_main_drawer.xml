@@ -6,17 +6,18 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_home"
-            android:icon="@drawable/ic_menu_camera"
-            android:title="@string/menu_home" />
+            android:icon="@drawable/ic_control"
+            android:title="Control" />
         <item
             android:id="@+id/nav_almacenes"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="ALMACENES" />
+            android:icon="@drawable/ic_warehouse"
+            android:title="Almacenes" />
         <item
             android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="@string/menu_slideshow" />
+            android:icon="@drawable/ic_folios"
+            android:title="Folio Orden de Compra" />
         <item
+            android:visible="false"
             android:id="@+id/nav_tools"
             android:icon="@drawable/ic_menu_manage"
             android:title="@string/menu_tools" />
@@ -25,6 +26,7 @@
     <item android:title="Login">
         <menu>
             <item
+                android:visible="false"
                 android:id="@+id/nav_share"
                 android:icon="@drawable/ic_menu_share"
                 android:title="@string/menu_share" />

@@ -22,6 +22,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,9 +34,12 @@ import java.io.InputStreamReader;
 public class Login extends AppCompatActivity {
     private Button btn_accesar;
     private EditText et_usuario,et_contra;
-    private static final String URL = "http://wsar.homelinux.com:3005/";
+    private static final String URL = "http://wsar.homelinux.com:3006/";
     private String mensajeGlobal="";
     Context contexto=this;
+    HttpParams httpParameters = new BasicHttpParams();
+    int timeoutConnection = 3000;
+    int timeoutSocket = 5000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,7 +103,9 @@ public class Login extends AppCompatActivity {
         {
             String usuario=params[0],contra=params[1];
             try {
-                HttpClient cliente = new DefaultHttpClient();
+                HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+                HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+                HttpClient cliente = new DefaultHttpClient(httpParameters);
                 HttpGet htpoget = new HttpGet(URL+"login/"+usuario+"/"+contra);
                 org.apache.http.HttpResponse resx = cliente.execute(htpoget);
                 BufferedReader bfr = new BufferedReader(new InputStreamReader(resx.getEntity().getContent()));
@@ -128,6 +134,10 @@ public class Login extends AppCompatActivity {
                             String dominio=objeto.getString("dominio");
                             usuario=objeto.getString("usuario");
                             String id_empresa=objeto.getString("id_empresa");
+                            String almacen=objeto.getString("id_almacen");
+                            String folio_oc=objeto.getString("folio_oc");
+                            String serie_oc=objeto.getString("serie_oc");
+                            String numero_oc=objeto.getString("numero_oc");
                             Log.i("cargausuario",empresa+" "+dominio+" "+usuario+" "+id_empresa+" "+success);
                             try{
 
@@ -140,6 +150,10 @@ public class Login extends AppCompatActivity {
                                 r.put("usuario",usuario);
                                 r.put("id_empresa",id_empresa);
                                 r.put("almacen","");
+                                r.put("folioOC",folio_oc);
+                                r.put("serieOC",serie_oc);
+                                r.put("numeroOC",numero_oc);
+                                r.put("almacenaux",almacen);
                                 db.insert("login",null,r);
                                 db.close();
 

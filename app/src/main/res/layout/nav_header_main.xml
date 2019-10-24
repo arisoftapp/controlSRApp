@@ -18,7 +18,7 @@
         android:layout_height="98dp"
         android:background="@drawable/boton_redondeado_blanco"
         android:contentDescription="@string/nav_header_desc"
-        app:srcCompat="@drawable/app_logo" />
+        app:srcCompat="@drawable/recibido" />
 
     <TextView
         android:id="@+id/tv_empresa"

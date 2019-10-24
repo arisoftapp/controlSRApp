@@ -12,6 +12,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
@@ -24,31 +26,51 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arisoft.controlsr.Tools.Database;
 
+import org.apache.http.HttpException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,FragmentAlmacenes.OnFragmentInteractionListener, FragmentInicial.OnFragmentInteractionListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        FragmentAlmacenes.OnFragmentInteractionListener,
+        FragmentInicial.OnFragmentInteractionListener,
+        FragmentFolios.OnFragmentInteractionListener {
 
     Context contexto=this;
     TextView tv_empresa,tv_usuario;
-    String URL,mensajeGlobal;
+    String URL,mensajeGlobal,fragmentActivo;
+    LinearLayout ll_cargarAlm;
     //fragment
     FragmentAlmacenes fragment_almacenes;
     FragmentInicial fragment_inicial;
+    FragmentFolios fragment_folios;
+    FragmentManager fragmentManager;
+    FragmentTransaction fragmentTransaction;
+    HttpParams httpParameters = new BasicHttpParams();
+    int timeoutConnection = 3000;
+    int timeoutSocket = 5000;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,19 +98,219 @@ public class MainActivity extends AppCompatActivity
 
         tv_empresa=(TextView)header.findViewById(R.id.tv_empresa);
         tv_usuario=(TextView)header.findViewById(R.id.tv_usuario);
+        tv_usuario.setText(getUsuario());
+        tv_empresa.setText(getEmpresa());
+        ll_cargarAlm=(LinearLayout)findViewById(R.id.ll_cargarAlm);
 
+
+
+    }
+    protected void onStart() {
+        Log.i("fragment","onStart");
         //inciando fragment
         fragment_almacenes=new FragmentAlmacenes();
         fragment_inicial=new FragmentInicial();
-        getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_inicial).commit();
+        fragment_folios=new FragmentFolios();
+        Log.i("fragment","onCreate");
+
         getDomain();
+        fragmentManager = getSupportFragmentManager();
+        fragmentTransaction = fragmentManager.beginTransaction();
+        //iniciando control de fragment
+        //fragmentActivo="";
 
         if(tablaVacia("almacenes","cod_alm")==true)
         {
             new cargarAlmacenesWS().execute();
         }
+        else
+        {
+            if(almacenSeleccionado().equalsIgnoreCase(""))
+            {
+                //getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_almacenes).commit();
+                fragmentTransaction.add(R.id.contenedorFragment,fragment_almacenes,"ALM").commit();
+                fragmentActivo="ALM";
+            }
+            else
+            {
+
+                //getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_inicial).commit();
+                fragmentTransaction.add(R.id.contenedorFragment,fragment_inicial,"INI").commit();
+                fragmentActivo="INI";
+
+            }
+        }
+        super.onStart();
+    }
+    protected void onResume() {
+        Log.i("fragment","onResume");
+        super.onResume();
+    }
+    protected void onPause() {
+        Log.i("fragment","onPause");
+        super.onPause();
+    }
+    protected void onStop() {
+        Log.i("fragment","onStop");
+        super.onStop();
+    }
+    protected void onDestroy() {
+        Log.i("fragment","onDestroy");
 
 
+        super.onDestroy();
+    }
+    protected void onRestart() {
+        Log.i("fragment","onRestart");
+        super.onRestart();
+    }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //No call for super(). Bug on API Level > 11.
+        fragmentManager = getSupportFragmentManager();
+        fragmentTransaction = fragmentManager.beginTransaction();
+        switch (fragmentActivo)
+        {
+            case "INI":
+                /*
+                FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+                transaction.remove(fragment_inicial);
+                transaction.commit();
+                */
+
+                fragmentTransaction.remove(fragment_inicial).commit();
+                break;
+            case "ALM":
+                fragmentTransaction.remove(fragment_almacenes).commit();
+                break;
+            case "FOL":
+                fragmentTransaction.remove(fragment_folios).commit();
+                break;
+        }
+        Log.i("fragment","onSaveInstanceState");
+        super.onSaveInstanceState(outState);
+    }
+    public void cargaAlmacenes(View view)
+    {
+        new cargarAlmacenesWS().execute();
+    }
+
+
+    public String getEmpresa()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT nomEmpresa FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
+    public String getIdEmpresa()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT id_empresa FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
+    public String getUsuario()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT usuario FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
+    public String almacenSeleccionado()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(this,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT almacen FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
     }
 
     @Override
@@ -105,6 +327,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+        Log.i("fragment","onCreateOptionsMenu");
         return true;
     }
 
@@ -131,31 +354,199 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_home) {
             // Handle the camera action
-            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.contenedorFragment,fragment_inicial);
-            transaction.commit();
+            if(ll_cargarAlm.getVisibility()==View.GONE)
+            {
+                if(almacenSeleccionado().equalsIgnoreCase(""))
+                {
+                    mensajes("seleccionar almacen");
+                }
+                else
+                {
+                    FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+                    transaction.replace(R.id.contenedorFragment,fragment_inicial);
+                    transaction.commit();
+                    fragmentActivo="INI";
+                }
+            }
+
+
         } else if (id == R.id.nav_almacenes) {
-            FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
-            transaction.replace(R.id.contenedorFragment,fragment_almacenes);
-            transaction.commit();
+            if(ll_cargarAlm.getVisibility()==View.GONE)
+            {
+                FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+                transaction.replace(R.id.contenedorFragment,fragment_almacenes);
+                transaction.commit();
+                fragmentActivo="ALM";
+            }
+
+
 
         } else if (id == R.id.nav_slideshow) {
+            if(ll_cargarAlm.getVisibility()==View.GONE)
+            {
+                if(almacenSeleccionado().equalsIgnoreCase(""))
+                {
+                    mensajes("seleccionar almacen");
+                }
+                else
+                {
+                    FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+                    transaction.replace(R.id.contenedorFragment,fragment_folios);
+                    transaction.commit();
+                    fragmentActivo="FOL";
+                }
+            }
+
+
 
         } else if (id == R.id.nav_tools) {
 
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_cerrar) {
-            eliminarTabla("login");
-            eliminarTabla("almacenes");
-            Intent i=new Intent(contexto,Login.class);
-            startActivity(i);
-            finish();
+            guardarFolio();
+
         }
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+    public void guardarFolio()
+    {
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("usuario", getUsuario());
+                obj.put("id_empresa", getIdEmpresa());
+                obj.put("serie", getSerie());
+                obj.put("numero", getNumero());
+                Log.i("json",obj.toString());
+                new actualizarFolio().execute(obj);
+            }
+            catch (JSONException e)
+            {
+                Log.e("error",e.getMessage());
+                mensajes(e.getMessage());
+            }
+    }
+    class actualizarFolio extends AsyncTask<JSONObject,Integer,String>
+    {
+        String validar;
+        private ProgressDialog progreso;
+
+        @Override
+        protected void onPreExecute()
+        {
+            progreso = new ProgressDialog(contexto);
+            progreso.setMessage("Guardando folio");
+            progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progreso.setCancelable(false);
+            // progreso.setMax(100);
+            // progreso.setProgress(0);
+            //progreso.show();
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(JSONObject... params)
+        {
+
+            JSONObject obj=params[0];
+             try {
+                 java.net.URL url = new URL("http://wsar.homelinux.com:3006/actualizar_folio"); //in the real code, there is an ip and a port
+                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                 conn.setRequestMethod("PUT");
+                 conn.setRequestProperty("Content-Type", "application/json");
+                 conn.setRequestProperty("Accept", "application/json");
+                 conn.setConnectTimeout(10000);//10 segundos espera
+                 conn.setDoOutput(true);
+                 conn.setDoInput(true);
+                 conn.connect();
+                 DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                 os.writeBytes(obj.toString());
+                 os.flush();
+                 os.close();
+                 BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                 StringBuilder sb = new StringBuilder();
+                 String line;
+                 while ((line = br.readLine()) != null) {
+                     sb.append(line + "\n");
+                 }
+                 int status = conn.getResponseCode();
+                 if (status < 400) {
+                     validar = "OK";
+                     String finalJSON = sb.toString();
+                     JSONObject jObject = new JSONObject(finalJSON); //Obtenemos el JSON global
+                     if (jObject.getBoolean("success") == true) {
+                         validar = "OK";
+                         mensajeGlobal = "" + jObject.getString("message");
+                     } else {
+                         validar = "false";
+                         mensajeGlobal = jObject.getString("message");
+                     }
+                     br.close();
+
+                 } else {
+                     validar = "false";
+                     mensajeGlobal = conn.getResponseMessage();
+                 }
+                 Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                 Log.i("MSG", conn.getResponseMessage());
+                 conn.disconnect();
+             }
+             catch (Exception e)
+             {
+                 Log.e("error",e.getMessage());
+                 validar="false";
+             }
+            return validar;
+
+        }
+        protected void onProgressUpdate(Integer... i)
+        {
+            progreso.setProgress(i[0]);
+        }
+        protected void onPostExecute(String s)
+        {
+            //progreso.dismiss();
+            if(s.equalsIgnoreCase("OK"))
+            {
+                mensajes(mensajeGlobal);
+                eliminarTabla("login");
+                eliminarTabla("almacenes");
+                eliminarTabla("documento");
+                eliminarTabla("articulos");
+                Intent i=new Intent(contexto,Login.class);
+                startActivity(i);
+                finish();
+            }
+            else
+            {
+                if(s.equalsIgnoreCase("false"))
+                {
+                    mensajes(mensajeGlobal);
+                    eliminarTabla("login");
+                    eliminarTabla("almacenes");
+                    eliminarTabla("documento");
+                    eliminarTabla("articulos");
+                    Intent i=new Intent(contexto,Login.class);
+                    startActivity(i);
+                    finish();
+                }
+                else
+                {
+                    mensajes(mensajeGlobal);
+                    eliminarTabla("login");
+                    eliminarTabla("almacenes");
+                    eliminarTabla("documento");
+                    eliminarTabla("articulos");
+                    Intent i=new Intent(contexto,Login.class);
+                    startActivity(i);
+                    finish();
+                }
+            }
+            super.onPostExecute(s);
+        }
     }
 
     class cargarAlmacenesWS extends AsyncTask<String,Integer,String>
@@ -180,7 +571,10 @@ public class MainActivity extends AppCompatActivity
         {
 
             try {
-                HttpClient cliente = new DefaultHttpClient();
+
+                HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+                HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+                HttpClient cliente = new DefaultHttpClient(httpParameters);
                 HttpGet htpoget = new HttpGet(URL+"control_almacenes");
                 org.apache.http.HttpResponse resx = cliente.execute(htpoget);
                 BufferedReader bfr = new BufferedReader(new InputStreamReader(resx.getEntity().getContent()));
@@ -252,14 +646,29 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(String s)
         {
             progreso.dismiss();
-            consultatabla();
+            //consultatabla();
             if(s.equalsIgnoreCase("OK"))
             {
+
+                Log.i("consultaAlmacenes"," | "+ll_cargarAlm.getVisibility());
+                if(ll_cargarAlm.getVisibility()==View.VISIBLE)
+                {
+                    ll_cargarAlm.setVisibility(View.GONE);
+                }
+
                 mensajes("Se agregaron almacenes con exito");
+                if(almacenSeleccionado().equalsIgnoreCase(""))
+                {
+                    actualizarAlmacen();
+                    getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_almacenes).commit();
+                    fragmentActivo="ALM";
+                }
+
             }
             else
             {
                 eliminarTabla("almacenes");
+                ll_cargarAlm.setVisibility(View.VISIBLE);
                 if(s.equalsIgnoreCase("false"))
                 {
                     mensajes(mensajeGlobal);
@@ -272,7 +681,37 @@ public class MainActivity extends AppCompatActivity
             super.onPostExecute(s);
         }
     }
+    public void actualizarAlmacen()
+    {
+        String almaux="";
+        Database admin = new Database(contexto,null,1);
+        SQLiteDatabase db = admin.getWritableDatabase();
+        try{
 
+            Cursor fila = db.rawQuery("SELECT almacenaux FROM login",null);
+            if(fila.moveToFirst())
+            {
+                almaux=fila.getString(0);
+                    Log.i("consultaAlmacenes"," | "+fila.getString(0));
+            }
+            db.close();
+        }catch (SQLiteException e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+        try{
+
+            ContentValues r = new ContentValues();
+            r.put("almacen",almaux);
+            db.update("login",r,"usuario='"+ getUsuario() +"'",null);
+            db.close();
+
+        }catch (SQLiteException e)
+        {
+            Log.e("update almacen",e.getMessage());
+        }
+    }
     public void consultatabla()
     {
         try{
@@ -330,7 +769,64 @@ public class MainActivity extends AppCompatActivity
             mensajes(sql.getMessage());
         }
     }
+    public String getSerie()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT serieOC FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaFolio"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin folio seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
 
+        return alm;
+    }
+    public String getNumero()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT numeroOC FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaFolio"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin folio seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
     public Boolean tablaVacia(String nomTabla, String columna)
     {
         Boolean vacio = true;

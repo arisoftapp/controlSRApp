@@ -1,5 +1,6 @@
 package com.example.arisoft.controlsr;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,14 +8,20 @@ import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.arisoft.controlsr.Tools.Database;
+
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpParams;
 
 import java.util.ArrayList;
 import java.util.Vector;
@@ -34,9 +41,12 @@ public class FragmentAlmacenes extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
     Spinner spinner2;
+    Button btn_guardar;
+    TextView tv_almacen;
     ArrayAdapter<String>listaAlmacenes;
     Vector<String> codigo = new Vector<String>();
     Vector<String> almacen = new Vector<String>();
+    String dominio;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -75,16 +85,155 @@ public class FragmentAlmacenes extends Fragment {
         }
 
 
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_fragment_almacenes, container, false);
+        getDomain();
         spinner2=(Spinner) v.findViewById(R.id.spinner2);
         spinner2.setAdapter(getAlmacenes());
+        btn_guardar=(Button)v.findViewById(R.id.btn_guardar);
+        tv_almacen=(TextView)v.findViewById(R.id.tv_almacen);
+        tv_almacen.setText(almacenSeleccionado());
+        btn_guardar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(tablaVacia("articulos","codigo")==false)
+                {
+                    mensajes("Ya tiene seleccionado un previo de compra");
+                }
+                else
+                {
+                    int size = spinner2.getAdapter().getCount();
+                    if (size>0){
+                        int pos = spinner2.getSelectedItemPosition();
+                        guardar(codigo.get(pos).toString());
+                        //Log.i("guardaralm",codigo.get(pos).toString());
+                    }
+                }
+
+
+            }
+        });
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_fragment_almacenes, container, false);
+        return v;
+    }
+    public void mensajes(String mensaje) {
+        Toast.makeText(getContext(),mensaje,Toast.LENGTH_SHORT).show();
+    }
+    public Boolean tablaVacia(String nomTabla, String columna)
+    {
+        Boolean vacio = true;
+        Database admin = new Database(getContext(), null,1);
+        SQLiteDatabase db = admin.getWritableDatabase();
+        try {
+            Cursor fila = db.rawQuery("SELECT " + columna + " FROM "+ nomTabla,null);
+            if(fila.moveToFirst())
+            {
+                vacio=false;
+            }
+
+        }catch (SQLiteException sql){
+            vacio = true;
+            Log.e("error",sql.getMessage());
+        }
+        db.close();
+        return vacio;
+    }
+    public String almacenSeleccionado()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(getContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT almacen FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
+    public String getUsuario()
+    {
+        String alm="";
+        try{
+            Database admin = new Database(getContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT usuario FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
+    public void guardar(String codigo)
+    {
+        try{
+
+            Database admin=new Database(getActivity().getApplicationContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            ContentValues r = new ContentValues();
+            r.put("almacen",codigo);
+            db.update("login",r, "usuario='"+ getUsuario() +"'",null);
+            db.close();
+            tv_almacen.setText(almacenSeleccionado());
+
+
+        }catch (SQLiteException e)
+        {
+            Log.e("actualizarbd",e.getMessage());
+        }
+    }
+    public void getDomain(){
+
+        try {
+            Database admin = new Database(getActivity().getApplicationContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT dominio FROM login",null);
+            if(fila.moveToFirst())
+            {
+                dominio = fila.getString(0);
+            }
+            db.close();
+        }catch (SQLiteException sql){
+            //mensajes(sql.getMessage());
+            Log.e("obtenerdominio",sql.getMessage());
+        }
     }
 
     public ArrayAdapter<String> getAlmacenes (){
@@ -98,9 +247,10 @@ public class FragmentAlmacenes extends Fragment {
                 do{
                     codigo.add(fila.getString(0));
                     almacen.add(fila.getString(0)+" - "+fila.getString(1));
+                    Log.i("consultaALM",fila.getString(0)+" - "+fila.getString(1));
                 }while (fila.moveToNext());
-                listaAlmacenes = new ArrayAdapter<>(getContext(),R.layout.support_simple_spinner_dropdown_item, almacen);
-                spinner2.setAdapter(listaAlmacenes);
+                listaAlmacenes = new ArrayAdapter<String>(this.getActivity(), android.R.layout.simple_spinner_item, almacen);
+                listaAlmacenes.setDropDownViewResource(android.R.layout.simple_dropdown_item_1line);
             }
             else
             {
@@ -115,6 +265,12 @@ public class FragmentAlmacenes extends Fragment {
 
         return listaAlmacenes;
     }
+
+
+
+
+
+
 
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
