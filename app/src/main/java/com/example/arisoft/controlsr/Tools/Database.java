@@ -16,6 +16,7 @@ public class Database extends SQLiteOpenHelper {
     public static final String TABLA_ALM = "almacenes";
     public static final String TABLA_ART = "articulos";
     public static final String TABLA_DOC = "documento";
+    public static final String TABLA_COM = "comentarios";
 
     public static final String SQL_LOGIN="CREATE TABLE "+TABLA_LOGIN+"(success text ," +
             "nomEmpresa text," +
@@ -52,11 +53,14 @@ public class Database extends SQLiteOpenHelper {
             "mod_comren text," +
             "crear_comdoc text," +
             "crear_conren text)";
+    public static final String SQL_COM="CREATE TABLE "+TABLA_COM+"(folio_previo text ," +
+            "comentario text)";
 
     private static final String SQL_INICIOLOGIN = "DROP TABLE IF EXISTS "+TABLA_LOGIN;
     private static final String SQL_INICIOALM = "DROP TABLE IF EXISTS "+TABLA_ALM;
     private static final String SQL_INICIOART = "DROP TABLE IF EXISTS "+TABLA_ART;
     private static final String SQL_INICIODOC = "DROP TABLE IF EXISTS "+TABLA_DOC;
+    private static final String SQL_INICIOCOM = "DROP TABLE IF EXISTS "+TABLA_COM;
 
 
     public void onCreate(SQLiteDatabase db) {
@@ -65,6 +69,7 @@ public class Database extends SQLiteOpenHelper {
         db.execSQL(SQL_INICIOALM);
         db.execSQL(SQL_INICIOART);
         db.execSQL(SQL_INICIODOC);
+        db.execSQL(SQL_INICIOCOM);
 
 
         //crear
@@ -72,6 +77,7 @@ public class Database extends SQLiteOpenHelper {
         db.execSQL(SQL_ALM);
         db.execSQL(SQL_ART);
         db.execSQL(SQL_DOC);
+        db.execSQL(SQL_COM);
 
     }
 

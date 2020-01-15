@@ -13,73 +13,97 @@
         android:layout_height="match_parent">
         <LinearLayout
             android:background="@color/cardview_dark_background"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="50dp">
+            android:layout_height="50dp"
+            android:weightSum="1"
+            >
             <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="25dp">
-                <TextView
-                    android:layout_marginLeft="8dp"
-                    android:textAlignment="center"
-                    android:text="Folio: "
-                    android:layout_gravity="center"
-                    android:textColor="@color/blanco"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-                <TextView
-                    android:id="@+id/tv_folio"
-                    android:text="----"
-                    android:textColor="@color/blanco"
-                    android:textAlignment="center"
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                android:background="@color/cardview_dark_background"
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_weight="0.9"
+                android:layout_height="50dp">
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="25dp">
+                    <TextView
+                        android:layout_marginLeft="8dp"
+                        android:textAlignment="center"
+                        android:text="Folio: "
+                        android:layout_gravity="center"
+                        android:textColor="@color/blanco"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/tv_folio"
+                        android:text="----"
+                        android:textColor="@color/blanco"
+                        android:textAlignment="center"
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
 
-                <TextView
-                    android:layout_marginLeft="8dp"
-                    android:textAlignment="center"
-                    android:text="Almacen: "
-                    android:layout_gravity="center"
-                    android:textColor="@color/blanco"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-                <TextView
-                    android:id="@+id/tv_almacen"
-                    android:text="----"
-                    android:textColor="@color/blanco"
-                    android:textAlignment="center"
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    <TextView
+                        android:layout_marginLeft="8dp"
+                        android:textAlignment="center"
+                        android:text="Almacen: "
+                        android:layout_gravity="center"
+                        android:textColor="@color/blanco"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/tv_almacen"
+                        android:text="----"
+                        android:textColor="@color/blanco"
+                        android:textAlignment="center"
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+
+                </LinearLayout>
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="25dp">
+                    <TextView
+                        android:layout_marginLeft="8dp"
+                        android:textAlignment="center"
+                        android:text="Proveedor: "
+                        android:layout_gravity="center"
+                        android:textColor="@color/blanco"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                    <TextView
+                        android:id="@+id/tv_prov"
+                        android:text="----"
+                        android:textColor="@color/blanco"
+                        android:textAlignment="center"
+                        android:layout_gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </LinearLayout>
 
 
             </LinearLayout>
             <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="25dp">
-                <TextView
-                    android:layout_marginLeft="8dp"
-                    android:textAlignment="center"
-                    android:text="Proveedor: "
-                    android:layout_gravity="center"
-                    android:textColor="@color/blanco"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-                <TextView
-                    android:id="@+id/tv_prov"
-                    android:text="----"
-                    android:textColor="@color/blanco"
-                    android:textAlignment="center"
-                    android:layout_gravity="center"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                android:layout_weight="0.1"
+                android:background="@color/cardview_dark_background"
+                android:layout_width="50dp"
+                android:layout_height="50dp">
+                <Button
+                    android:id="@+id/btn_camara"
+                    android:background="@drawable/ic_camara"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
             </LinearLayout>
 
 
         </LinearLayout>
+
         <EditText
             android:id="@+id/et_folio_factura"
             android:imeOptions="actionDone"
@@ -137,57 +161,54 @@
                 android:gravity="center"
                 android:text="X Recibir" />
         </LinearLayout>
-<android.support.constraint.ConstraintLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:orientation="horizontal"
-        android:weightSum="2"
-        app:layout_constraintBottom_toBottomOf="parent">
-        <Button
-            android:layout_margin="3dp"
-            android:id="@+id/btn_cancelar"
-            android:layout_weight="1"
-            android:text="Cancelar"
-            android:textSize="30dp"
-            android:textColor="#fff"
-            android:background="@drawable/boton_redondeado_rojo"
+
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-        <Button
-            android:id="@+id/btn_guardar"
-            android:layout_weight="1"
-            android:text="Guardar"
-            android:layout_margin="3dp"
-            android:textSize="30dp"
-            android:textColor="#fff"
-            android:background="@drawable/boton_redondeado_verde"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent">
+            <LinearLayout
+                android:id="@+id/linearLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:layout_alignParentBottom="true"
+                >
+                <Button
+                    android:layout_margin="3dp"
+                    android:id="@+id/btn_cancelar"
+                    android:layout_weight="1"
+                    android:text="Cancelar"
+                    android:textSize="30dp"
+                    android:textColor="#fff"
+                    android:background="@drawable/boton_redondeado_rojo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+                <Button
+                    android:id="@+id/btn_guardar"
+                    android:layout_weight="1"
+                    android:text="Guardar"
+                    android:layout_margin="3dp"
+                    android:textSize="30dp"
+                    android:textColor="#fff"
+                    android:background="@drawable/boton_redondeado_verde"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </LinearLayout>
+            <ListView
+                android:id="@+id/lvItems"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="50dp"
+
+                />
+
+
+        </RelativeLayout>
+
+
 
     </LinearLayout>
 
-    <ListView
-        android:id="@+id/lvItems"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="50dp"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</android.support.constraint.ConstraintLayout>
-
-
-    </LinearLayout>
 
 </FrameLayout>

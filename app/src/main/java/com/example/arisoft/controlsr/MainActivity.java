@@ -1,9 +1,11 @@
 package com.example.arisoft.controlsr;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
@@ -12,9 +14,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.support.v4.view.GravityCompat;
@@ -101,9 +105,28 @@ public class MainActivity extends AppCompatActivity
         tv_usuario.setText(getUsuario());
         tv_empresa.setText(getEmpresa());
         ll_cargarAlm=(LinearLayout)findViewById(R.id.ll_cargarAlm);
+        checkCameraPermission();
 
 
 
+    }
+    private void checkCameraPermission() {
+        int permissionCheck = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.CAMERA);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            Log.i("Mensaje", "No se tiene permiso para la camara!.");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 225);
+        } else {
+            Log.i("Mensaje", "Tienes permiso para usar la camara.");
+        }
+        int permissionCheckInternet = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.INTERNET);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            Log.i("Mensaje", "No se tiene permiso para la conexion a internet!.");
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, 225);
+        } else {
+            Log.i("Mensaje", "Tienes permiso para la conexion a internet.");
+        }
     }
     protected void onStart() {
         Log.i("fragment","onStart");
@@ -125,20 +148,37 @@ public class MainActivity extends AppCompatActivity
         }
         else
         {
-            if(almacenSeleccionado().equalsIgnoreCase(""))
+            String camara="";
+            camara=""+getIntent().getStringExtra("barcode");
+            if(camara.equalsIgnoreCase("null"))
             {
-                //getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_almacenes).commit();
-                fragmentTransaction.add(R.id.contenedorFragment,fragment_almacenes,"ALM").commit();
-                fragmentActivo="ALM";
+                Log.i("camara", "null");
+                if(almacenSeleccionado().equalsIgnoreCase(""))
+                {
+                    //getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_almacenes).commit();
+                    fragmentTransaction.add(R.id.contenedorFragment,fragment_almacenes,"ALM").commit();
+                    fragmentActivo="ALM";
+                }
+                else
+                {
+
+                    //getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_inicial).commit();
+                    fragmentTransaction.add(R.id.contenedorFragment,fragment_inicial,"INI").commit();
+                    fragmentActivo="INI";
+
+                }
             }
             else
             {
-
-                //getSupportFragmentManager().beginTransaction().add(R.id.contenedorFragment,fragment_inicial).commit();
+                Bundle args = new Bundle();
+                args.putString("codigo", ""+camara);
+                fragment_inicial.setArguments(args);
                 fragmentTransaction.add(R.id.contenedorFragment,fragment_inicial,"INI").commit();
                 fragmentActivo="INI";
-
+                Log.i("camara", "datos:"+camara);
             }
+
+
         }
         super.onStart();
     }
@@ -516,6 +556,7 @@ public class MainActivity extends AppCompatActivity
                 eliminarTabla("almacenes");
                 eliminarTabla("documento");
                 eliminarTabla("articulos");
+                eliminarTabla("comentarios");
                 Intent i=new Intent(contexto,Login.class);
                 startActivity(i);
                 finish();
@@ -694,7 +735,7 @@ public class MainActivity extends AppCompatActivity
                 almaux=fila.getString(0);
                     Log.i("consultaAlmacenes"," | "+fila.getString(0));
             }
-            db.close();
+
         }catch (SQLiteException e)
         {
             Log.e("Error:",""+e.getMessage());

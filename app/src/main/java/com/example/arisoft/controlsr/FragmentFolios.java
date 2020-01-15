@@ -52,7 +52,7 @@ public class FragmentFolios extends Fragment {
     Button btn_guardar_oc;
     String mensajeGlobal,URL;
     HttpParams httpParameters = new BasicHttpParams();
-    int timeoutConnection = 3000;
+    int timeoutConnection = 5000;
     int timeoutSocket = 5000;
     // TODO: Rename and change types of parameters
     private String mParam1;

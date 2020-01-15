@@ -38,8 +38,8 @@ public class Login extends AppCompatActivity {
     private String mensajeGlobal="";
     Context contexto=this;
     HttpParams httpParameters = new BasicHttpParams();
-    int timeoutConnection = 3000;
-    int timeoutSocket = 5000;
+    int timeoutConnection = 10000;
+    int timeoutSocket = 10000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -193,7 +193,7 @@ public class Login extends AppCompatActivity {
         }
         protected void onPostExecute(String s)
         {
-            progreso.dismiss();
+            //progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
 
