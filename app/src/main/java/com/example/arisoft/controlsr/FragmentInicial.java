@@ -64,7 +64,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-
+import java.util.concurrent.ExecutionException;
 
 
 public class FragmentInicial extends Fragment {
@@ -82,8 +82,8 @@ public class FragmentInicial extends Fragment {
     String codigo1_gbl,folio_gbl,folio_OC_gbl,serie_OC_gbl,numero_OC_gbl,codigo_camara="",posicion_gbl;
     Boolean aclacarion=false;
     HttpParams httpParameters = new BasicHttpParams();
-    int timeoutConnection = 15000;
-    int timeoutSocket = 15000;
+    int timeoutConnection = 20000;
+    int timeoutSocket = 20000;
     Activity actividad = getActivity();
 
 
@@ -550,37 +550,89 @@ public class FragmentInicial extends Fragment {
     }
     public void consultarComentarios(int posicion)
     {
-        Log.i("consultacoment","comentarios");
-        String folio_orden,coment;
-        //int posicion=0;
-        folio_orden=getFolioOC();
+
+        ProgressDialog progreso;
+        progreso = new ProgressDialog(getContext());
+        progreso.setMessage("Insertando comentarios");
+        progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progreso.setCancelable(false);
+        progreso.show();
+            Log.i("consultacoment","comentarios");
+            String folio_orden,coment;
+        String resultadoAsynctask;
+        boolean validar=false;
+            //int posicion=0;
+            folio_orden=getFolioOC();
+            try{
+                Database admin = new Database(getContext(),null,1);
+                SQLiteDatabase db = admin.getWritableDatabase();
+                Cursor fila = db.rawQuery("SELECT comentario,id FROM comentarios where estatus='A' ",null);
+                if(fila.moveToFirst())
+                {
+                    do{
+                        posicion=posicion+1;
+                        coment=fila.getString(0);
+                        String cadena=coment.replace(".","");
+                        cadena=cadena.replace("-","");
+                        cadena=cadena.replace(" ","");
+                        //new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1));
+
+                        resultadoAsynctask =  new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1)).get();
+
+                        Log.i("consultacoment",folio_orden+"|"+posicion+"|"+cadena+"|"+fila.getString(1)+"|"+resultadoAsynctask);
+                        if(resultadoAsynctask.equalsIgnoreCase("OK"))
+                        {
+                            validar=true;
+                        }
+                        else
+                        {
+                            validar=false;
+                        }
+                    }while (fila.moveToNext() && validar==true);
+                }
+                db.close();
+            }catch (SQLiteException e)
+            {
+                mensajes("Error al consultar codigo:"+e.getMessage());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        progreso.dismiss();
+
+
+    }
+    public boolean validarComentarioActivo(String id)
+    {
+        boolean resultado=true;
         try{
             Database admin = new Database(getContext(),null,1);
             SQLiteDatabase db = admin.getWritableDatabase();
-            Cursor fila = db.rawQuery("SELECT comentario FROM comentarios",null);
+            Cursor fila = db.rawQuery("SELECT comentario FROM comentarios where estatus='A' and id='"+id+"'   ",null);
             if(fila.moveToFirst())
             {
-               do{
-                    posicion=posicion+1;
-
-                    coment=fila.getString(0);
-                    String cadena=coment.replace(".","");
-                    cadena=cadena.replace("-","");
-                    cadena=cadena.replace(" ","");
-                    Log.i("consultacoment",folio_orden+"|"+posicion+"|"+cadena);
-                    new insertarComentariosOC().execute(folio_orden,""+posicion,cadena);
-                }while (fila.moveToNext());
+                Log.i("validarcomentario","comentarios activos");
+                resultado=true;
+            }
+            else
+            {
+                resultado=false;
+                Log.i("validarcomentario","sin comentarios activos");
             }
             db.close();
         }catch (SQLiteException e)
         {
+            resultado=false;
             mensajes("Error al consultar codigo:"+e.getMessage());
         }
-
+        return resultado;
     }
     class insertarComentariosOC extends AsyncTask<String,Integer,String>
     {
         String validar;
+        String comentario;
+        String idComentario;
         private ProgressDialog progreso;
 
         @Override
@@ -590,15 +642,15 @@ public class FragmentInicial extends Fragment {
             progreso.setMessage("Insertando comentarios");
             progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progreso.setCancelable(false);
-            //progreso.setMax(100);
-            //progreso.setProgress(0);
             progreso.show();
             super.onPreExecute();
         }
         @Override
         protected String doInBackground(String... params)
         {
-            String folio=params[0],posicion=params[1],comentario=params[2];
+            String folio=params[0],posicion=params[1];
+            comentario=params[2];
+            idComentario=params[3];
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -645,11 +697,12 @@ public class FragmentInicial extends Fragment {
             progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
-
                 mensajes("se inserto comentario");
+                cambiarEstatusComentario(idComentario);
             }
             else
             {
+
                 if(s.equalsIgnoreCase("false"))
                 {
                     mensajes(mensajeGlobal);
@@ -662,7 +715,63 @@ public class FragmentInicial extends Fragment {
             super.onPostExecute(s);
         }
     }
+    public boolean insertarComentarioOCPrueba(String folio_orden,String pos, String cadena,String id)
+    {
+        String folio=folio_orden,posicion=pos;
+        String comentario=cadena;
+        String idComentario=id;
+        Boolean validar=false;
+        try {
+            HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+            HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+            HttpClient cliente = new DefaultHttpClient(httpParameters);
+            HttpGet htpoget = new HttpGet(URL+"insert_comren_coment/"+folio+"/"+posicion+"/"+comentario);
+            org.apache.http.HttpResponse resx = cliente.execute(htpoget);
+            BufferedReader bfr = new BufferedReader(new InputStreamReader(resx.getEntity().getContent()));
+            StringBuffer stb = new StringBuffer("");
+            String linea="";
+            StringBuffer res = new StringBuffer();
+            while ((linea =bfr.readLine())!=null)
+            {
+                res.append(linea);
+            }
+            String finalJSON = res.toString();
+            JSONObject jObject = new JSONObject(finalJSON); //Obtenemos el JSON global
+            if(jObject.getBoolean("success")==true)
+            {
+                validar=true;
+                cambiarEstatusComentario(idComentario);
+                mensajeGlobal=""+jObject.getString("message");
+            }
+            else
+            {
+                validar=false;
+                mensajeGlobal=jObject.getString("message");
+            }
+            bfr.close();
+        }
+        catch (Exception e)
+        {
+            validar=false;
+            mensajeGlobal="Error:"+e.getMessage();
+        }
+        return validar;
+    }
 
+    public void cambiarEstatusComentario(String id)
+    {
+        try{
+            Database admin=new Database(getContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            ContentValues r = new ContentValues();
+            r.put("estatus","G");
+            db.update("comentarios",r, "id='"+ id +"' ",null);
+            db.close();
+        }catch (SQLiteException e)
+        {
+            Toast.makeText(getContext(), "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
 
     public static Double formatearDecimales(Double numero, Integer numeroDecimales) {
         return Math.round(numero * Math.pow(10, numeroDecimales)) / Math.pow(10, numeroDecimales);
@@ -978,6 +1087,8 @@ public class FragmentInicial extends Fragment {
                                     ContentValues r = new ContentValues();
                                     r.put("folio_previo",folio);
                                     r.put("comentario",comentario);
+                                    r.put("estatus","A");
+                                    r.put("id",i);
                                     db.insert("comentarios",null,r);
                                     db.close();
                                 }
@@ -1108,6 +1219,7 @@ public class FragmentInicial extends Fragment {
             progreso.setProgress(0);
             progreso.show();
             */
+            btn_guardar.setEnabled(false);
             super.onPreExecute();
         }
         @Override
@@ -1205,11 +1317,14 @@ public class FragmentInicial extends Fragment {
             consultatabla("*","documento");
             if(s.equalsIgnoreCase("OK"))
             {
+                btn_guardar.setEnabled(true);
                 mensajes("Se agregaron datos del documento");
                 tv_prov.setText(consultaDato("proveedor","documento"));
             }
             else
             {
+                //new cargarComplementosWS().execute(et_folio_factura.getText().toString().trim(),almacenSeleccionado());
+                quitarDatos();
                 if(s.equalsIgnoreCase("false"))
                 {
                     mensajes("No se cargaron complementos"+mensajeGlobal);
@@ -1291,12 +1406,8 @@ public class FragmentInicial extends Fragment {
             progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
-                //consultatabla();
                 mensajes(mensajeGlobal);
                 Log.i("guardando","modifcarpreviocomdoc con exito");
-                //actualizar
-                //modificarComren();
-
             }
             else
             {
@@ -2425,7 +2536,7 @@ public class FragmentInicial extends Fragment {
         protected void onPreExecute()
         {
             progreso = new ProgressDialog(getContext());
-            progreso.setMessage("Modificando folios");
+            progreso.setMessage("Modificando back");
             progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progreso.setCancelable(false);
             // progreso.setMax(100);

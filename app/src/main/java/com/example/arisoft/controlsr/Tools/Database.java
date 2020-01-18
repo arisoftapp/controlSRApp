@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class Database extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "ControlSR";
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     public Database(Context context, SQLiteDatabase.CursorFactory factory,int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
@@ -53,8 +53,10 @@ public class Database extends SQLiteOpenHelper {
             "mod_comren text," +
             "crear_comdoc text," +
             "crear_conren text)";
-    public static final String SQL_COM="CREATE TABLE "+TABLA_COM+"(folio_previo text ," +
-            "comentario text)";
+    public static final String SQL_COM="CREATE TABLE "+TABLA_COM+"( folio_previo text ," +
+            "comentario text," +
+            "estatus text," + //A=activo//G=guardado
+            "id INTEGER PRIMARY KEY AUTOINCREMENT)";
 
     private static final String SQL_INICIOLOGIN = "DROP TABLE IF EXISTS "+TABLA_LOGIN;
     private static final String SQL_INICIOALM = "DROP TABLE IF EXISTS "+TABLA_ALM;
@@ -82,7 +84,11 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
+        if(oldVersion==1 && newVersion==2)
+        {
+            db.execSQL("ALTER TABLE comentarios ADD COLUMN estatus TEXT DEFAULT 'A'");
+            db.execSQL("ALTER TABLE comentarios ADD COLUMN id INTEGER ");
+        }
     }
 
 }
