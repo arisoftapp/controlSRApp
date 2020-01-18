@@ -82,8 +82,8 @@ public class FragmentInicial extends Fragment {
     String codigo1_gbl,folio_gbl,folio_OC_gbl,serie_OC_gbl,numero_OC_gbl,codigo_camara="",posicion_gbl;
     Boolean aclacarion=false;
     HttpParams httpParameters = new BasicHttpParams();
-    int timeoutConnection = 20000;
-    int timeoutSocket = 20000;
+    int timeoutConnection = 25000;
+    int timeoutSocket = 25000;
     Activity actividad = getActivity();
 
 
@@ -551,12 +551,7 @@ public class FragmentInicial extends Fragment {
     public void consultarComentarios(int posicion)
     {
 
-        ProgressDialog progreso;
-        progreso = new ProgressDialog(getContext());
-        progreso.setMessage("Insertando comentarios");
-        progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        progreso.setCancelable(false);
-        progreso.show();
+
             Log.i("consultacoment","comentarios");
             String folio_orden,coment;
         String resultadoAsynctask;
@@ -599,7 +594,7 @@ public class FragmentInicial extends Fragment {
             } catch (ExecutionException e) {
                 e.printStackTrace();
             }
-        progreso.dismiss();
+
 
 
     }
@@ -642,7 +637,7 @@ public class FragmentInicial extends Fragment {
             progreso.setMessage("Insertando comentarios");
             progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progreso.setCancelable(false);
-            progreso.show();
+            //progreso.show();
             super.onPreExecute();
         }
         @Override
@@ -694,7 +689,7 @@ public class FragmentInicial extends Fragment {
         }
         protected void onPostExecute(String s)
         {
-            progreso.dismiss();
+            //progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
                 mensajes("se inserto comentario");
