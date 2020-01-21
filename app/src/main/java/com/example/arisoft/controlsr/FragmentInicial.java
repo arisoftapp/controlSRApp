@@ -181,7 +181,9 @@ public class FragmentInicial extends Fragment {
         btn_guardar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //calcularDescuento();
                 //mensajes("guardar");
+
                 if(existenCambios()==false)
                 {
                     mensajes("Sin cambios");
@@ -202,12 +204,7 @@ public class FragmentInicial extends Fragment {
                             .setNegativeButton("Cancelar", null)
                             .create();
                     dialog.show();
-
-                    //enviarAclaracion();
-                    //pruebaJson();
-                    //new insertarArticulosAclaracion().execute(getIdEmpresa());
                 }
-
             }
         });
 
@@ -414,6 +411,91 @@ public class FragmentInicial extends Fragment {
 
         return v;
     }
+    public float calcularDescuento()
+    {
+        float descuentoTotal = 0;
+        try{
+            Database admin = new Database(getContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT surtido,surtidoaux,costo,descuento1,descuento2,descuento3,descuento4,descuento5,tipocambio FROM articulos where surtidoaux!=surtido",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    float cant=fila.getFloat(0)-fila.getFloat(1);
+                    float descuento=fila.getFloat(3);
+                    float tipocambio=fila.getFloat(8);
+                    float costoTotal=cant*fila.getFloat(2)*tipocambio;
+                    if(descuento>0)//descuento1
+                    {
+                        descuento=descuento/100;
+                        descuentoTotal=descuentoTotal+costoTotal*descuento;
+                        descuento=fila.getFloat(4);
+                        if(descuento>0)//descuento2
+                        {
+                            descuento=descuento/100;
+                            descuentoTotal=descuentoTotal+costoTotal*descuento;
+                            descuento=fila.getFloat(5);
+                            if(descuento>0)//descuento3
+                            {
+                                descuento=descuento/100;
+                                descuentoTotal=descuentoTotal+costoTotal*descuento;
+                                descuento=fila.getFloat(6);
+                                if(descuento>0)//descuento4
+                                {
+                                    descuento=descuento/100;
+                                    descuentoTotal=descuentoTotal+costoTotal*descuento;
+                                    descuento=fila.getFloat(7);
+                                    if(descuento>0)//descuento5
+                                    {
+                                        descuento=descuento/100;
+                                        descuentoTotal=descuentoTotal+costoTotal*descuento;
+                                    }
+
+                                }
+
+                            }
+                        }
+
+
+                    }
+                    //descuentoTotal=descuentoTotal*tipocambio;
+                    Log.i("consulta"," | "+fila.getString(0)+
+                            " | "+fila.getString(1)+
+                            " | "+fila.getString(2)+
+                            " | "+fila.getString(3)+
+                            " | "+fila.getString(4)+
+                            " | "+fila.getString(5)+
+                            " | "+fila.getString(6)+
+                            " | "+fila.getString(7)
+                    );
+                    Log.i("consultaCalculo",
+                            " | "+cant+
+                            " | "+costoTotal+
+                                    " | "+descuentoTotal+
+                                    " | "+tipocambio
+                    );
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                descuentoTotal=0;
+            }
+
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            descuentoTotal=0;
+        }
+        if(descuentoTotal>0)
+        {
+            String valor=""+descuentoTotal;
+            valor=""+formatearDecimales(Double.parseDouble(valor),2);
+            descuentoTotal= Float.parseFloat(valor);
+
+        }
+        return descuentoTotal;
+    }
     public void quitarDatos()
     {
         eliminarTabla("articulos");
@@ -516,7 +598,7 @@ public class FragmentInicial extends Fragment {
         total=""+formatearDecimales(Double.parseDouble(total),2);
         //mensajes(folio_previo+"|"+almacen+"|"+folio_orden+"|"+totalreg+"|"+totaluds+"|"+sumatotal);
         Log.i("obtenerdatoscomdocs",folio_previo+"|"+almacen+"|"+folio_orden+"|"+totalreg+"|"+totaluds+"|"+sumatotal+"|"+iva+"|"+total);
-        new crearComdoc().execute(folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total);
+        new crearComdoc().execute(folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total,""+calcularDescuento());
 
     }
     public void crearComren()
@@ -1115,6 +1197,12 @@ public class FragmentInicial extends Fragment {
                             Float porsurtir=cantidad-surtido;
                             Float costo=Float.parseFloat(objeto.getString("costo"));
                             Float iva=Float.parseFloat(objeto.getString("iva"));
+                            String descuento1=objeto.getString("descuento1");
+                            String descuento2=objeto.getString("descuento2");
+                            String descuento3=objeto.getString("descuento3");
+                            String descuento4=objeto.getString("descuento4");
+                            String descuento5=objeto.getString("descuento5");
+                            String tipocambio=objeto.getString("tipocambio");
 
                             try{
                                 publishProgress(i+1);
@@ -1132,6 +1220,12 @@ public class FragmentInicial extends Fragment {
                                 r.put("costo",costo);
                                 r.put("surtidoaux",surtido);
                                 r.put("iva",iva);
+                                r.put("descuento1",descuento1);
+                                r.put("descuento2",descuento2);
+                                r.put("descuento3",descuento3);
+                                r.put("descuento4",descuento4);
+                                r.put("descuento5",descuento5);
+                                r.put("tipocambio",tipocambio);
                                 db.insert("articulos",null,r);
                                 db.close();
                             }
@@ -1527,13 +1621,13 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            String folio_previo=params[0],almacen=params[1],folio_orden=params[2],totalreg=params[3],totaluds=params[4],sumatotal=params[5],iva=params[6],total=params[7];
+            String folio_previo=params[0],almacen=params[1],folio_orden=params[2],totalreg=params[3],totaluds=params[4],sumatotal=params[5],iva=params[6],total=params[7],descuento=params[8];
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
                 HttpClient cliente = new DefaultHttpClient(httpParameters);
                 //HttpGet htpoget = new HttpGet(URL+"consulta_previo/"+folio+"/"+almacen);
-                HttpGet httpGet=new HttpGet(URL+"consultar_datos_comdoc/"+folio_previo+"/"+almacen+"/"+folio_orden+"/"+totalreg+"/"+totaluds+"/"+sumatotal+"/"+iva+"/"+total);
+                HttpGet httpGet=new HttpGet(URL+"consultar_datos_comdoc/"+folio_previo+"/"+almacen+"/"+folio_orden+"/"+totalreg+"/"+totaluds+"/"+sumatotal+"/"+iva+"/"+total+"/"+descuento);
                 org.apache.http.HttpResponse resx = cliente.execute(httpGet);
                 BufferedReader bfr = new BufferedReader(new InputStreamReader(resx.getEntity().getContent()));
                 StringBuffer stb = new StringBuffer("");
@@ -2337,7 +2431,7 @@ public class FragmentInicial extends Fragment {
                 mensajes(mensajeGlobal);
                 if(surtidoParcial()==true)
                 {
-
+                    //]InsertarMacropro
                     aclacarion=true;
                     new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
                     crearComren();

@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class Database extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "ControlSR";
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 3;
     public Database(Context context, SQLiteDatabase.CursorFactory factory,int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
@@ -39,10 +39,16 @@ public class Database extends SQLiteOpenHelper {
             "por_surtir Float," +
             "folio text," +
             "costo Float," +
-            "surtidoaux Float," +
+            "surtidoaux Float," +//cantidad surtida cuando es parcial
             "iva Float," +
             "modificar text," +
-            "crear text)";
+            "crear text," +
+            "descuento1 text," +
+            "descuento2 text," +
+            "descuento3 text," +
+            "descuento4 text," +
+            "descuento5 text," +
+            "tipocambio text)";
     public static final String SQL_DOC="CREATE TABLE "+TABLA_DOC+"(folio_previo text ," +
             "fecha text," +
             "almacen text," +
@@ -84,11 +90,21 @@ public class Database extends SQLiteOpenHelper {
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if(oldVersion==1 && newVersion==2)
+        if(oldVersion==1 && newVersion>1)
         {
             db.execSQL("ALTER TABLE comentarios ADD COLUMN estatus TEXT DEFAULT 'A'");
             db.execSQL("ALTER TABLE comentarios ADD COLUMN id INTEGER ");
         }
+        if(oldVersion==2 && newVersion>2)
+        {
+            db.execSQL("ALTER TABLE articulos ADD COLUMN descuento1 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN descuento2 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN descuento3 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN descuento4 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN descuento5 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN tipocambio TEXT");
+        }
+
     }
 
 }
