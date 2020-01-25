@@ -652,8 +652,8 @@ public class FragmentInicial extends Fragment {
                         String cadena=coment.replace(".","");
                         cadena=cadena.replace("-","");
                         cadena=cadena.replace(" ","");
-                        //new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1));
-
+                        new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1));
+                        /*
                         resultadoAsynctask =  new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1)).get();
 
                         Log.i("consultacoment",folio_orden+"|"+posicion+"|"+cadena+"|"+fila.getString(1)+"|"+resultadoAsynctask);
@@ -665,16 +665,14 @@ public class FragmentInicial extends Fragment {
                         {
                             validar=false;
                         }
-                    }while (fila.moveToNext() && validar==true);
+
+                         */
+                    }while (fila.moveToNext());
                 }
                 db.close();
             }catch (SQLiteException e)
             {
                 mensajes("Error al consultar codigo:"+e.getMessage());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
             }
 
 
@@ -1497,6 +1495,7 @@ public class FragmentInicial extends Fragment {
             {
                 mensajes(mensajeGlobal);
                 Log.i("guardando","modifcarpreviocomdoc con exito");
+
             }
             else
             {
@@ -2448,10 +2447,6 @@ public class FragmentInicial extends Fragment {
                     modificarComren();
                     obtenerDatosComdoc();
                     enviarAclaracion("3");
-                    /*
-                    aumentarFolio();
-                    quitarDatos();
-                    */
 
                 }
             }

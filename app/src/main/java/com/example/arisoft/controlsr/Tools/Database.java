@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class Database extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "ControlSR";
-    public static final int DATABASE_VERSION = 3;
+    public static final int DATABASE_VERSION = 4;
     public Database(Context context, SQLiteDatabase.CursorFactory factory,int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
@@ -41,8 +41,8 @@ public class Database extends SQLiteOpenHelper {
             "costo Float," +
             "surtidoaux Float," +//cantidad surtida cuando es parcial
             "iva Float," +
-            "modificar text," +
-            "crear text," +
+            "modificar text," +//por articulo
+            "crear text," +//por articulo
             "descuento1 text," +
             "descuento2 text," +
             "descuento3 text," +
@@ -58,7 +58,9 @@ public class Database extends SQLiteOpenHelper {
             "mod_comdoc text," +
             "mod_comren text," +
             "crear_comdoc text," +
-            "crear_conren text)";
+            "crear_conren text," +
+            "envio text," +
+            "guardar_completo, text)";
     public static final String SQL_COM="CREATE TABLE "+TABLA_COM+"( folio_previo text ," +
             "comentario text," +
             "estatus text," + //A=activo//G=guardado
@@ -95,7 +97,7 @@ public class Database extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE comentarios ADD COLUMN estatus TEXT DEFAULT 'A'");
             db.execSQL("ALTER TABLE comentarios ADD COLUMN id INTEGER ");
         }
-        if(oldVersion==2 && newVersion>2)
+        if(oldVersion<=2 && newVersion>2)
         {
             db.execSQL("ALTER TABLE articulos ADD COLUMN descuento1 TEXT");
             db.execSQL("ALTER TABLE articulos ADD COLUMN descuento2 TEXT");
@@ -103,6 +105,11 @@ public class Database extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE articulos ADD COLUMN descuento4 TEXT");
             db.execSQL("ALTER TABLE articulos ADD COLUMN descuento5 TEXT");
             db.execSQL("ALTER TABLE articulos ADD COLUMN tipocambio TEXT");
+        }
+        if(oldVersion<=3 && newVersion>3)
+        {
+            db.execSQL("ALTER TABLE articulos ADD COLUMN envio TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN guardar_completo TEXT");
         }
 
     }
