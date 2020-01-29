@@ -30,6 +30,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.arisoft.controlsr.Modelo.ConsultasBD;
 import com.example.arisoft.controlsr.Modelo.Recibido;
 import com.example.arisoft.controlsr.Modelo.RecibidoAdapter;
 import com.example.arisoft.controlsr.Tools.Database;
@@ -73,8 +74,9 @@ public class FragmentInicial extends Fragment {
     //variables
     EditText et_folio_factura,et_codigo;
     TextView tv_almacen,tv_folio,tv_prov;
-    Button btn_cancelar,btn_guardar,btn_camara;
+    Button btn_cancelar,btn_guardar,btn_camara,btn_reenviar,btn_continuar;
     String mensajeGlobal,URL;
+    ImageView iv_mp1,iv_mb,iv_mp2,iv_co1,iv_co2,iv_comen;
     ArrayList<Recibido> Recibido_list;
     private RecibidoAdapter Recibido_adap;
     ListView lvItems;
@@ -82,9 +84,12 @@ public class FragmentInicial extends Fragment {
     String codigo1_gbl,folio_gbl,folio_OC_gbl,serie_OC_gbl,numero_OC_gbl,codigo_camara="",posicion_gbl;
     Boolean aclacarion=false;
     HttpParams httpParameters = new BasicHttpParams();
-    int timeoutConnection = 25000;
-    int timeoutSocket = 25000;
+    int timeoutConnection = 10000;
+    int timeoutSocket = 10000;
     Activity actividad = getActivity();
+    Context contexto;
+    ConsultasBD consultasBD;
+
 
 
 
@@ -118,7 +123,8 @@ public class FragmentInicial extends Fragment {
         btn_camara=(Button)v.findViewById(R.id.btn_camara);
         lvItems=(ListView)v.findViewById(R.id.lvItems);
         getDomain();
-
+        contexto=getContext();
+        consultasBD=new ConsultasBD();
 
         if(tablaVacia("articulos","codigo")==false)
         {
@@ -195,9 +201,34 @@ public class FragmentInicial extends Fragment {
                             .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    new soloConsultaFolio().execute(getFolioOC(),almacenSeleccionado());
-                                    //new modificarBack().execute("01","5");
-                                    //consultarComentarios(5);
+                                    if(consultasBD.getCompleto(contexto)==true && consultasBD.getEnvioAclaracion(contexto)==false )
+                                    {
+                                        if(surtidoParcial()==true)
+                                        {
+                                            //InsertarMacropro
+                                            aclacarion=true;
+                                            enviarAclaracion("1");
+
+                                        }
+                                        else
+                                        {
+                                            aclacarion=false;
+                                            enviarAclaracion("3");
+
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(consultasBD.getCompleto(contexto)==false && consultasBD.getEnvioAclaracion(contexto)==false)
+                                        {
+                                            new soloConsultaFolio().execute(getFolioOC(),almacenSeleccionado());
+                                        }
+                                        else
+                                        {
+
+                                        }
+                                    }
+
 
                                 }
                             })
@@ -601,6 +632,30 @@ public class FragmentInicial extends Fragment {
         new crearComdoc().execute(folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total,""+calcularDescuento());
 
     }
+    public void modificarBackorder()
+    {
+        String cantidad,articulo;
+        try{
+            Database admin = new Database(getContext(),null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT codigo,surtido,surtidoaux FROM articulos WHERE surtidoaux!=surtido and backorder='false'",null);
+            if(fila.moveToFirst())
+            {
+                do{
+
+                    articulo=fila.getString(0);
+                    Float cant=fila.getFloat(1)-fila.getFloat(2);
+                    cantidad=""+cant;
+                    Log.i("consultacrearComren",cantidad+"|"+articulo+"|");
+                    new modificarBack().execute(articulo,cantidad);
+                }while (fila.moveToNext());
+            }
+            db.close();
+        }catch (SQLiteException e)
+        {
+            mensajes("Error al consultar codigo:"+e.getMessage());
+        }
+    }
     public void crearComren()
     {
         String folio_previo,cantidad,articulo,folio_orden;
@@ -610,7 +665,7 @@ public class FragmentInicial extends Fragment {
         try{
             Database admin = new Database(getContext(),null,1);
             SQLiteDatabase db = admin.getWritableDatabase();
-            Cursor fila = db.rawQuery("SELECT codigo,surtido,surtidoaux FROM articulos WHERE surtidoaux!=surtido",null);
+            Cursor fila = db.rawQuery("SELECT codigo,surtido,surtidoaux FROM articulos WHERE surtidoaux!=surtido and crear='false' ",null);
             if(fila.moveToFirst())
             {
                 do{
@@ -618,9 +673,10 @@ public class FragmentInicial extends Fragment {
                     articulo=fila.getString(0);
                     Float cant=fila.getFloat(1)-fila.getFloat(2);
                     cantidad=""+cant;
-                    Log.i("consultacrearComren",folio_previo+"|"+posicion+"|"+cantidad+"|"+articulo+"|"+folio_orden);
-                    new crearComren().execute(folio_previo,""+posicion,cantidad,articulo,folio_orden);
-                    new modificarBack().execute(articulo,cantidad);
+                    Log.i("consultacrearComren",folio_previo+"|"+posicion+"|"+cantidad+"|"+articulo+"|"+folio_orden+"|"+fila.getCount());
+                    new crearComren().execute(folio_previo,""+posicion,cantidad,articulo,folio_orden,""+fila.getCount());
+                    //new modificarBack().execute(articulo,cantidad);
+
                 }while (fila.moveToNext());
             }
             db.close();
@@ -628,11 +684,11 @@ public class FragmentInicial extends Fragment {
         {
             mensajes("Error al consultar codigo:"+e.getMessage());
         }
-        consultarComentarios(posicion);
+
+        consultasBD.posComtDoc(posicion,folio_previo,contexto);
     }
     public void consultarComentarios(int posicion)
     {
-
 
             Log.i("consultacoment","comentarios");
             String folio_orden,coment;
@@ -647,65 +703,32 @@ public class FragmentInicial extends Fragment {
                 if(fila.moveToFirst())
                 {
                     do{
+                        Log.i("consultacoment","con comentarios");
                         posicion=posicion+1;
                         coment=fila.getString(0);
                         String cadena=coment.replace(".","");
                         cadena=cadena.replace("-","");
                         cadena=cadena.replace(" ","");
                         new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1));
-                        /*
-                        resultadoAsynctask =  new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1)).get();
-
-                        Log.i("consultacoment",folio_orden+"|"+posicion+"|"+cadena+"|"+fila.getString(1)+"|"+resultadoAsynctask);
-                        if(resultadoAsynctask.equalsIgnoreCase("OK"))
-                        {
-                            validar=true;
-                        }
-                        else
-                        {
-                            validar=false;
-                        }
-
-                         */
                     }while (fila.moveToNext());
+                }
+                else
+                {
+                    Log.i("consultacoment","sin comentarios");
+                    consultasBD.verificarComentarios(tv_folio.getText().toString(),contexto);
+                    //consultasBD.getComent_completos(contexto);
+                    actualizarVistaInfo();
                 }
                 db.close();
             }catch (SQLiteException e)
             {
                 mensajes("Error al consultar codigo:"+e.getMessage());
             }
-
-
-
     }
-    public boolean validarComentarioActivo(String id)
-    {
-        boolean resultado=true;
-        try{
-            Database admin = new Database(getContext(),null,1);
-            SQLiteDatabase db = admin.getWritableDatabase();
-            Cursor fila = db.rawQuery("SELECT comentario FROM comentarios where estatus='A' and id='"+id+"'   ",null);
-            if(fila.moveToFirst())
-            {
-                Log.i("validarcomentario","comentarios activos");
-                resultado=true;
-            }
-            else
-            {
-                resultado=false;
-                Log.i("validarcomentario","sin comentarios activos");
-            }
-            db.close();
-        }catch (SQLiteException e)
-        {
-            resultado=false;
-            mensajes("Error al consultar codigo:"+e.getMessage());
-        }
-        return resultado;
-    }
+
     class insertarComentariosOC extends AsyncTask<String,Integer,String>
     {
-        String validar;
+        String validar,folio;
         String comentario;
         String idComentario;
         private ProgressDialog progreso;
@@ -723,7 +746,8 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            String folio=params[0],posicion=params[1];
+            folio=params[0];
+            String posicion=params[1];
             comentario=params[2];
             idComentario=params[3];
             try {
@@ -772,79 +796,24 @@ public class FragmentInicial extends Fragment {
             //progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
-                mensajes("se inserto comentario");
-                cambiarEstatusComentario(idComentario);
+                //mensajes("se inserto comentario");
+                consultasBD.cambiarEstatusComentario("G",idComentario,contexto);
             }
             else
             {
-
+                consultasBD.cambiarEstatusComentario("A",idComentario,contexto);
                 if(s.equalsIgnoreCase("false"))
                 {
-                    mensajes(mensajeGlobal);
+                    //mensajes(mensajeGlobal);
                 }
                 else
                 {
-                    mensajes(mensajeGlobal);
+                    //mensajes(mensajeGlobal);
                 }
             }
+            consultasBD.verificarComentarios(tv_folio.getText().toString(),contexto);
+            actualizarVistaInfo();
             super.onPostExecute(s);
-        }
-    }
-    public boolean insertarComentarioOCPrueba(String folio_orden,String pos, String cadena,String id)
-    {
-        String folio=folio_orden,posicion=pos;
-        String comentario=cadena;
-        String idComentario=id;
-        Boolean validar=false;
-        try {
-            HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-            HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
-            HttpClient cliente = new DefaultHttpClient(httpParameters);
-            HttpGet htpoget = new HttpGet(URL+"insert_comren_coment/"+folio+"/"+posicion+"/"+comentario);
-            org.apache.http.HttpResponse resx = cliente.execute(htpoget);
-            BufferedReader bfr = new BufferedReader(new InputStreamReader(resx.getEntity().getContent()));
-            StringBuffer stb = new StringBuffer("");
-            String linea="";
-            StringBuffer res = new StringBuffer();
-            while ((linea =bfr.readLine())!=null)
-            {
-                res.append(linea);
-            }
-            String finalJSON = res.toString();
-            JSONObject jObject = new JSONObject(finalJSON); //Obtenemos el JSON global
-            if(jObject.getBoolean("success")==true)
-            {
-                validar=true;
-                cambiarEstatusComentario(idComentario);
-                mensajeGlobal=""+jObject.getString("message");
-            }
-            else
-            {
-                validar=false;
-                mensajeGlobal=jObject.getString("message");
-            }
-            bfr.close();
-        }
-        catch (Exception e)
-        {
-            validar=false;
-            mensajeGlobal="Error:"+e.getMessage();
-        }
-        return validar;
-    }
-
-    public void cambiarEstatusComentario(String id)
-    {
-        try{
-            Database admin=new Database(getContext(),null,1);
-            SQLiteDatabase db = admin.getWritableDatabase();
-            ContentValues r = new ContentValues();
-            r.put("estatus","G");
-            db.update("comentarios",r, "id='"+ id +"' ",null);
-            db.close();
-        }catch (SQLiteException e)
-        {
-            Toast.makeText(getContext(), "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -856,7 +825,7 @@ public class FragmentInicial extends Fragment {
         try{
             Database admin = new Database(getContext(),null,1);
             SQLiteDatabase db = admin.getWritableDatabase();
-            Cursor fila = db.rawQuery("SELECT * FROM articulos WHERE surtidoaux!=surtido",null);
+            Cursor fila = db.rawQuery("SELECT * FROM articulos WHERE surtidoaux!=surtido and modificar='false'",null);
             if(fila.moveToFirst())
             {
                 do{
@@ -1224,6 +1193,10 @@ public class FragmentInicial extends Fragment {
                                 r.put("descuento4",descuento4);
                                 r.put("descuento5",descuento5);
                                 r.put("tipocambio",tipocambio);
+                                r.put("backorder","false");
+                                r.put("modificar","false");
+                                r.put("crear","false");
+
                                 db.insert("articulos",null,r);
                                 db.close();
                             }
@@ -1363,6 +1336,11 @@ public class FragmentInicial extends Fragment {
                                 r.put("mod_comren","false");
                                 r.put("crear_comdoc","false");
                                 r.put("crear_conren","false");
+                                r.put("envio","false");
+                                r.put("guardar_completo","false");
+                                r.put("mod_back","false");
+                                r.put("pos_coment",0);
+                                r.put("coment_completos","false");
                                 db.insert("documento",null,r);
                                 db.close();
 
@@ -1427,7 +1405,8 @@ public class FragmentInicial extends Fragment {
 
     class modificarPrevioComdoc extends AsyncTask<String,Integer,String>
     {
-        String validar;
+        String validar,folio;
+
         private ProgressDialog progreso;
 
         @Override
@@ -1445,7 +1424,8 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            String folio=params[0],almacen=params[1],estatus=params[2];
+            folio=params[0];
+            String almacen=params[1],estatus=params[2];
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -1495,7 +1475,8 @@ public class FragmentInicial extends Fragment {
             {
                 mensajes(mensajeGlobal);
                 Log.i("guardando","modifcarpreviocomdoc con exito");
-
+                consultasBD.cambiarDocComdoc("TRUE",folio,contexto);
+                actualizarVistaInfo();
             }
             else
             {
@@ -1512,9 +1493,74 @@ public class FragmentInicial extends Fragment {
             super.onPostExecute(s);
         }
     }
+    public void actualizarVistaInfo()
+    {
+        if(consultasBD.getMod_comdoc(contexto)==true)
+        {
+           // mensajes("se modifico comdoc previo");
+            iv_mp1.setImageResource(R.drawable.ic_completado);
+        }
+        else
+        {
+            //mensajes("no se modifico comdoc");
+
+            iv_mp1.setImageResource(R.drawable.ic_incompleto);
+        }
+        if(consultasBD.getCrear_comren(contexto)==true)
+        {
+            //mensajes("se creo comren");
+            iv_co1.setImageResource(R.drawable.ic_completado);
+        }
+        else
+        {
+            //mensajes("no se modifico comren previo");
+            iv_co1.setImageResource(R.drawable.ic_incompleto);
+        }
+        if(consultasBD.getMod_back(contexto)==true)
+        {
+            //mensajes("se modifico backorder ");
+            iv_mb.setImageResource(R.drawable.ic_completado);
+        }
+        else
+        {
+            //mensajes("no se modifico backorder");
+            iv_mb.setImageResource(R.drawable.ic_incompleto);
+        }
+        if(consultasBD.getMod_comren(contexto)==true)
+        {
+            //mensajes("se modifico previo ");
+            iv_mp2.setImageResource(R.drawable.ic_completado);
+        }
+        else
+        {
+            //mensajes("no se modifico previo");
+            iv_mp2.setImageResource(R.drawable.ic_incompleto);
+        }
+        if(consultasBD.getCrear_comdoc(contexto)==true)
+        {
+            //mensajes("se creo comdoc ");
+            iv_co2.setImageResource(R.drawable.ic_completado);
+        }
+        else
+        {
+            //mensajes("no se creo comdoc");
+            iv_co2.setImageResource(R.drawable.ic_incompleto);
+        }
+        if(consultasBD.getComent_completos(contexto)==true)
+        {
+            iv_comen.setImageResource(R.drawable.ic_completado);
+        }
+        else
+        {
+            iv_comen.setImageResource(R.drawable.ic_incompleto);
+        }
+
+
+
+    }
     class modificarPrevioComren extends AsyncTask<String,Integer,String>
     {
-        String validar;
+        String validar,articulo,folio;
         private ProgressDialog progreso;
 
         @Override
@@ -1532,7 +1578,9 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            String folio=params[0],cantidad=params[1],articulo=params[2];
+            String cantidad=params[1];
+            folio=params[0];
+            articulo=params[2];
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -1580,6 +1628,7 @@ public class FragmentInicial extends Fragment {
             progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
+                consultasBD.modificarArtComren("true",articulo,contexto);
                 Log.i("guardando","modificarpreviocomren con exito");
                 //consultatabla();
                 mensajes(mensajeGlobal);
@@ -1587,6 +1636,7 @@ public class FragmentInicial extends Fragment {
             }
             else
             {
+                consultasBD.modificarArtComren("false",articulo,contexto);
                 Log.i("guardando","modificarpreviocomren sin exito");
                 if(s.equalsIgnoreCase("false"))
                 {
@@ -1597,12 +1647,14 @@ public class FragmentInicial extends Fragment {
                     mensajes(mensajeGlobal);
                 }
             }
+            consultasBD.verificarModArticulos(folio,contexto);
+            actualizarVistaInfo();
             super.onPostExecute(s);
         }
     }
     class crearComdoc extends AsyncTask<String,Integer,String>
     {
-        String validar;
+        String validar,folio_previo;
         private ProgressDialog progreso;
 
         @Override
@@ -1620,7 +1672,8 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            String folio_previo=params[0],almacen=params[1],folio_orden=params[2],totalreg=params[3],totaluds=params[4],sumatotal=params[5],iva=params[6],total=params[7],descuento=params[8];
+            folio_previo=params[0];
+            String almacen=params[1],folio_orden=params[2],totalreg=params[3],totaluds=params[4],sumatotal=params[5],iva=params[6],total=params[7],descuento=params[8];
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -1669,6 +1722,7 @@ public class FragmentInicial extends Fragment {
             progreso.dismiss();
             if(s.equalsIgnoreCase("OK"))
             {
+                consultasBD.crearDocComdoc("true",folio_previo,contexto);
                 Log.i("guardando","crear comdoc con exito");
                 //consultatabla();
                 mensajes(mensajeGlobal);
@@ -1676,6 +1730,7 @@ public class FragmentInicial extends Fragment {
             }
             else
             {
+                consultasBD.crearDocComdoc("false",folio_previo,contexto);
                 Log.i("guardando","crearcomdoc sin exito");
                 if(s.equalsIgnoreCase("false"))
                 {
@@ -1686,12 +1741,13 @@ public class FragmentInicial extends Fragment {
                     mensajes(mensajeGlobal);
                 }
             }
+            actualizarVistaInfo();
             super.onPostExecute(s);
         }
     }
     class crearComren extends AsyncTask<String,Integer,String>
     {
-        String validar;
+        String validar,cant_art_info,folio_previo,articulo;
         private ProgressDialog progreso;
 
         @Override
@@ -1709,7 +1765,10 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            String folio_previo=params[0],posicion=params[1],cantidad=params[2],articulo=params[3],folio_orden=params[4];
+            folio_previo=params[0];
+            articulo=params[3];
+            String posicion=params[1],cantidad=params[2],folio_orden=params[4];
+            cant_art_info=params[5];
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -1760,10 +1819,12 @@ public class FragmentInicial extends Fragment {
                 Log.i("guardando","crearcomren con exito");
                 //consultatabla();
                 mensajes(mensajeGlobal);
+                consultasBD.crearArtComren("true",articulo,contexto);
 
             }
             else
             {
+                consultasBD.crearArtComren("false",articulo,contexto);
                 Log.i("guardando","crearcomren sin exito");
                 if(s.equalsIgnoreCase("false"))
                 {
@@ -1774,6 +1835,8 @@ public class FragmentInicial extends Fragment {
                     mensajes(mensajeGlobal);
                 }
             }
+            consultasBD.verificarCrearArticulos(folio_previo,contexto);
+            actualizarVistaInfo();
             super.onPostExecute(s);
         }
     }
@@ -2428,27 +2491,8 @@ public class FragmentInicial extends Fragment {
             {
                 //consultatabla();
                 mensajes(mensajeGlobal);
-                if(surtidoParcial()==true)
-                {
-                    //]InsertarMacropro
-                    aclacarion=true;
-                    new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
-                    crearComren();
-                    modificarComren();
-                    obtenerDatosComdoc();
-                    enviarAclaracion("1");
-
-                }
-                else
-                {
-                    aclacarion=false;
-                    new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"S");
-                    crearComren();
-                    modificarComren();
-                    obtenerDatosComdoc();
-                    enviarAclaracion("3");
-
-                }
+                //consultasBD.mensajes("prueba",contexto);
+                procesando();
             }
             else
             {
@@ -2464,6 +2508,209 @@ public class FragmentInicial extends Fragment {
             super.onPostExecute(s);
         }
     }
+    public void procesando()
+    {
+
+        LayoutInflater inflater = FragmentInicial.this.getLayoutInflater();
+        View v = inflater.inflate(R.layout.dialog_info, null);
+        final AlertDialog dialog;
+        dialog = new AlertDialog.Builder(FragmentInicial.this.getContext())
+                .setTitle("Registrando")
+                .setCancelable(false)
+                .setView(v)
+                .create();
+
+        //imageview dialog
+        iv_mp1=v.findViewById(R.id.iv_mp1);
+        iv_mp2=v.findViewById(R.id.iv_mp2);
+        iv_mb=v.findViewById(R.id.iv_mb);
+        iv_co1=v.findViewById(R.id.iv_co1);
+        iv_co2=v.findViewById(R.id.iv_co2);
+        iv_comen=v.findViewById(R.id.iv_comen);
+
+        btn_reenviar=v.findViewById(R.id.btn_reenviar);
+        btn_continuar=v.findViewById(R.id.btn_continuar);
+        insertandoMovimiento();
+
+        btn_reenviar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //mensajes("reenviar");
+                consultasBD.verificarCompleto(tv_folio.getText().toString(),contexto);
+                if(consultasBD.getCompleto(contexto)==false)
+                {
+                    insertandoMovimiento();
+                }
+
+            }
+        });
+        btn_continuar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                consultasBD.verificarCompleto(tv_folio.getText().toString(),contexto);
+                if(consultasBD.getCompleto(contexto)==true)
+                {
+                    dialog.dismiss();
+                    if(surtidoParcial()==true)
+                    {
+                        //InsertarMacropro
+                        aclacarion=true;
+                        enviarAclaracion("1");
+
+                    }
+                    else
+                    {
+                        aclacarion=false;
+                        enviarAclaracion("3");
+
+                    }
+                }
+                else
+                {
+                    mensajes("No se a guardado completamente");
+                }
+
+
+
+            }
+        });
+        dialog.show();
+
+        Log.i("thread","antes");
+      new myUpdateAsyncTask(contexto).execute();
+    }
+    private class myUpdateAsyncTask extends AsyncTask<Intent, Integer, Boolean> {
+
+        private Context mContext;
+        private String title;
+        private ProgressDialog progreso;
+
+        @Override
+        protected void onPreExecute()
+        {
+            progreso = new ProgressDialog(getContext());
+            progreso.setMessage("Espere");
+            progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progreso.setCancelable(false);
+            progreso.show();
+            super.onPreExecute();
+        }
+
+        public myUpdateAsyncTask (Context context) {
+            this.mContext = context;
+        }
+
+
+        @Override
+        protected Boolean doInBackground(Intent... intents) {
+            //@Todo Tarea a procesar
+            title = "soy un titulo asyncTask";
+            try {
+                Thread.sleep(21000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            //publishProgress(1); //Para mandar control para actualizar la UI
+            return true;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            //@Todo values[0] para obtener el código de control, actualizar la UI
+            if (values[0]==1); //textView.setText(title)
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            super.onPostExecute(result);
+
+            if (result) {
+                //@Todo AsyncTask finalizado
+                progreso.dismiss();
+                consultasBD.verificarCompleto(tv_folio.getText().toString(),contexto);
+                vistaBotones();
+                Log.i("thread","espero 21 segundos");
+            }
+        }
+
+    }
+    public void vistaBotones()
+    {
+        if(consultasBD.getCompleto(contexto)==true)
+        {
+            btn_continuar.setVisibility(View.VISIBLE);
+            btn_reenviar.setVisibility(View.GONE);
+        }
+        else
+        {
+            btn_reenviar.setVisibility(View.VISIBLE);
+            btn_continuar.setVisibility(View.GONE);
+        }
+    }
+    public void insertandoMovimiento()
+    {
+        if(surtidoParcial()==true)
+        {
+            //InsertarMacropro
+            aclacarion=true;
+            if(consultasBD.getMod_comdoc(contexto)==false)
+            {
+                new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
+            }
+            if(consultasBD.getCrear_comren(contexto)==false)
+            {
+                crearComren();
+            }
+            if(consultasBD.getMod_back(contexto)==false)
+            {
+                modificarBackorder();
+            }
+            if(consultasBD.getMod_comren(contexto)==false)
+            {
+                modificarComren();
+            }
+            if(consultasBD.getCrear_comdoc(contexto)==false)
+            {
+                obtenerDatosComdoc();
+            }
+            if(consultasBD.getComent_completos(contexto)==false)
+            {
+                consultarComentarios(consultasBD.getPosicionComentarios(contexto));
+            }
+            //enviarAclaracion("1");
+
+        }
+        else
+        {
+            aclacarion=false;
+            if(consultasBD.getMod_comdoc(contexto)==false)
+            {
+                new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
+            }
+            if(consultasBD.getCrear_comren(contexto)==false)
+            {
+                crearComren();
+            }
+            if(consultasBD.getMod_back(contexto)==false)
+            {
+                modificarBackorder();
+            }
+            if(consultasBD.getMod_comren(contexto)==false)
+            {
+                modificarComren();
+            }
+            if(consultasBD.getCrear_comdoc(contexto)==false)
+            {
+                obtenerDatosComdoc();
+            }
+            if(consultasBD.getComent_completos(contexto)==false)
+            {
+                consultarComentarios(consultasBD.getPosicionComentarios(contexto));
+            }
+            //enviarAclaracion("3");
+
+        }
+    }
     class insertarAclaracion extends AsyncTask<String,Integer,String>
     {
         String validar;
@@ -2476,8 +2723,6 @@ public class FragmentInicial extends Fragment {
             progreso.setMessage("Insertando folios");
             progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progreso.setCancelable(false);
-            // progreso.setMax(100);
-            // progreso.setProgress(0);
             progreso.show();
             super.onPreExecute();
         }
@@ -2593,8 +2838,7 @@ public class FragmentInicial extends Fragment {
                 //consultatabla();
                 mensajes(mensajeGlobal);
                 new insertarArticulosAclaracion().execute(getIdEmpresa());
-
-
+                consultasBD.cambiarEnvioAclaracion("true",tv_folio.getText().toString(),contexto);
             }
             else
             {
@@ -2613,7 +2857,7 @@ public class FragmentInicial extends Fragment {
     }
     class modificarBack extends AsyncTask<String,Integer,String>
     {
-        String validar;
+        String validar,back_articulo;
         private ProgressDialog progreso;
 
         @Override
@@ -2633,8 +2877,8 @@ public class FragmentInicial extends Fragment {
         protected String doInBackground(String... params)
         {
             String back_almacen=almacenSeleccionado(),
-                    back_articulo=params[0],
                     back_cantidad=params[1];
+            back_articulo=params[0];
 
             try {
                 JSONObject obj = new JSONObject();
@@ -2719,9 +2963,11 @@ public class FragmentInicial extends Fragment {
             {
                 //consultatabla();
                 mensajes(mensajeGlobal);
+                consultasBD.cambiarArtBack("true",back_articulo,contexto);
             }
             else
             {
+                consultasBD.cambiarArtBack("false",back_articulo,contexto);
                 if(s.equalsIgnoreCase("false"))
                 {
                     mensajes(mensajeGlobal);
@@ -2732,6 +2978,8 @@ public class FragmentInicial extends Fragment {
                     mensajes(mensajeGlobal);
                 }
             }
+            consultasBD.verificarBackorderArticulos(tv_folio.getText().toString(),contexto);
+            actualizarVistaInfo();
             super.onPostExecute(s);
         }
     }

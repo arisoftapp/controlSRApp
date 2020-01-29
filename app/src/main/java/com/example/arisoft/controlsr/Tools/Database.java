@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class Database extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "ControlSR";
-    public static final int DATABASE_VERSION = 4;
+    public static final int DATABASE_VERSION = 5;
     public Database(Context context, SQLiteDatabase.CursorFactory factory,int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
@@ -41,26 +41,30 @@ public class Database extends SQLiteOpenHelper {
             "costo Float," +
             "surtidoaux Float," +//cantidad surtida cuando es parcial
             "iva Float," +
-            "modificar text," +//por articulo
-            "crear text," +//por articulo
+            "modificar text," +//por articulo true/false
+            "crear text," +//por articulo true/false
             "descuento1 text," +
             "descuento2 text," +
             "descuento3 text," +
             "descuento4 text," +
             "descuento5 text," +
-            "tipocambio text)";
+            "tipocambio text," +
+            "backorder text)";//por articulo true/false
     public static final String SQL_DOC="CREATE TABLE "+TABLA_DOC+"(folio_previo text ," +
             "fecha text," +
             "almacen text," +
             "codigo_prov text," +
             "proveedor text," +
             "unidades_a_surtir text," +
-            "mod_comdoc text," +
-            "mod_comren text," +
-            "crear_comdoc text," +
-            "crear_conren text," +
-            "envio text," +
-            "guardar_completo, text)";
+            "mod_comdoc text," + //true/false
+            "mod_comren text," +//true/false
+            "crear_comdoc text," +//true/false
+            "crear_conren text," +//true/false
+            "envio text," +//true/false
+            "guardar_completo text," +//true/false
+            "mod_back text," +//true/false
+            "pos_coment INTEGER," +
+            "coment_completos text)";//true/false
     public static final String SQL_COM="CREATE TABLE "+TABLA_COM+"( folio_previo text ," +
             "comentario text," +
             "estatus text," + //A=activo//G=guardado
@@ -110,6 +114,14 @@ public class Database extends SQLiteOpenHelper {
         {
             db.execSQL("ALTER TABLE articulos ADD COLUMN envio TEXT");
             db.execSQL("ALTER TABLE articulos ADD COLUMN guardar_completo TEXT");
+        }
+        if(oldVersion<=4 && newVersion>4)
+        {
+            db.execSQL("ALTER TABLE articulos ADD COLUMN backorder TEXT DEFAULT 'false' ");
+            db.execSQL("ALTER TABLE documento ADD COLUMN mod_back TEXT DEFAULT 'false' ");
+            db.execSQL("ALTER TABLE documento ADD COLUMN pos_coment INTEGER ");
+            db.execSQL("ALTER TABLE documento ADD COLUMN coment_completos text ");
+
         }
 
     }

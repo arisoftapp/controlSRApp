@@ -9,11 +9,13 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
         <LinearLayout
+            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageView
+                android:id="@+id/iv_mp1"
                 android:layout_marginRight="8dp"
                 android:src="@drawable/ic_incompleto"
                 android:layout_width="wrap_content"
@@ -23,10 +25,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="modificar previo 1"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(0/0)"/>
+
 
         </LinearLayout>
         <LinearLayout
@@ -35,6 +34,27 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageView
+                android:id="@+id/iv_mp2"
+                android:layout_marginRight="8dp"
+                android:src="@drawable/ic_incompleto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+
+                android:layout_marginRight="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="modificar previo 2"/>
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_marginBottom="16dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:id="@+id/iv_mb"
                 android:layout_marginRight="8dp"
                 android:src="@drawable/ic_incompleto"
                 android:layout_width="wrap_content"
@@ -43,11 +63,8 @@
                 android:layout_marginRight="8dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="modificar previo 2"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(0/0)"/>
+                android:text="modificar backorder "/>
+
 
         </LinearLayout>
 
@@ -57,6 +74,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageView
+                android:id="@+id/iv_co1"
                 android:layout_marginRight="8dp"
                 android:src="@drawable/ic_incompleto"
                 android:layout_width="wrap_content"
@@ -66,10 +84,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="crear orden 1"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(0/0)"/>
+
 
         </LinearLayout>
 
@@ -79,6 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageView
+                android:id="@+id/iv_co2"
                 android:layout_marginRight="8dp"
                 android:src="@drawable/ic_incompleto"
                 android:layout_width="wrap_content"
@@ -88,18 +104,16 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="crear orden 2"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(0/0)"/>
+
 
         </LinearLayout>
         <LinearLayout
-
+            android:layout_marginBottom="16dp"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageView
+                android:id="@+id/iv_comen"
                 android:layout_marginRight="8dp"
                 android:src="@drawable/ic_incompleto"
                 android:layout_width="wrap_content"
@@ -109,11 +123,30 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="comentarios"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="(0/0)"/>
 
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <Button
+
+                android:visibility="gone"
+                android:text="Re-enviar"
+                android:layout_weight="0.5"
+                android:id="@+id/btn_reenviar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+            </Button>
+            <Button
+                android:visibility="gone"
+                android:text="Continuar"
+                android:layout_weight="0.5"
+                android:id="@+id/btn_continuar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+            </Button>
         </LinearLayout>
 
 
