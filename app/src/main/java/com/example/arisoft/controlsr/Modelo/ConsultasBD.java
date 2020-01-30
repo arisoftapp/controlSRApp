@@ -289,10 +289,13 @@ public class ConsultasBD {
         if(getMod_comdoc(contexto)==true && getCrear_comren(contexto)==true && getMod_back(contexto)==true
         && getMod_comren(contexto)==true && getCrear_comdoc(contexto)==true && getComent_completos(contexto))
         {
+            Log.i("verificarCompleto","completo");
+
             estatus="true";
         }
         else
         {
+            Log.i("verificarCompleto","incompleto");
             estatus="false";
         }
         try{

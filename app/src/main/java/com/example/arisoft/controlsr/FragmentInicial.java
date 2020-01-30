@@ -73,7 +73,7 @@ public class FragmentInicial extends Fragment {
 
     //variables
     EditText et_folio_factura,et_codigo;
-    TextView tv_almacen,tv_folio,tv_prov;
+    TextView tv_almacen,tv_folio,tv_prov,tv_fol_dialog;
     Button btn_cancelar,btn_guardar,btn_camara,btn_reenviar,btn_continuar;
     String mensajeGlobal,URL;
     ImageView iv_mp1,iv_mb,iv_mp2,iv_co1,iv_co2,iv_comen;
@@ -709,7 +709,8 @@ public class FragmentInicial extends Fragment {
                         String cadena=coment.replace(".","");
                         cadena=cadena.replace("-","");
                         cadena=cadena.replace(" ","");
-                        new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1));
+                        //new insertarComentariosOC().execute(folio_orden,""+posicion,cadena,fila.getString(1),coment);
+                        new insertarComentariosOCJson().execute(folio_orden,""+posicion,cadena,fila.getString(1),coment);
                     }while (fila.moveToNext());
                 }
                 else
@@ -750,6 +751,19 @@ public class FragmentInicial extends Fragment {
             String posicion=params[1];
             comentario=params[2];
             idComentario=params[3];
+            //creando json de comentario
+            JSONObject jsonComent = new JSONObject();
+            try {
+                jsonComent.put("comentario", params[4]);
+
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+
+
+
             try {
                 HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
                 HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
@@ -816,7 +830,161 @@ public class FragmentInicial extends Fragment {
             super.onPostExecute(s);
         }
     }
+    class insertarComentariosOCJson extends AsyncTask<String,Integer,String>
+    {
+        String validar,folio;
+        String comentario;
+        String idComentario;
+        private ProgressDialog progreso;
 
+        @Override
+        protected void onPreExecute()
+        {
+            progreso = new ProgressDialog(getContext());
+            progreso.setMessage("Insertando comentarios");
+            progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progreso.setCancelable(false);
+            //progreso.show();
+            super.onPreExecute();
+        }
+        @Override
+        protected String doInBackground(String... params)
+        {
+            folio=params[0];
+            String posicion=params[1];
+            comentario=params[2];
+            idComentario=params[3];
+            //creando json de comentario
+            JSONObject jsonComent = new JSONObject();
+            try {
+                jsonComent.put("comentario", params[4]);
+
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+
+            try{
+                java.net.URL url = new URL(URL+"insert_comren_comentario/"+folio+"/"+posicion+"/"+comentario);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setConnectTimeout(timeoutConnection);//10 segundos espera
+                conn.setReadTimeout(timeoutSocket);
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
+                conn.connect();
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                os.writeBytes(jsonComent.toString());
+                os.flush();
+                os.close();
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line + "\n");
+                }
+                int status = conn.getResponseCode();
+                if (status < 400) {
+                    validar = "OK";
+                    String finalJSON = sb.toString();
+                    JSONObject jObject = new JSONObject(finalJSON); //Obtenemos el JSON global
+                    if (jObject.getBoolean("success") == true) {
+                        validar = "OK";
+                        mensajeGlobal = "" + jObject.getString("message");
+                    } else {
+                        validar = "false";
+                        mensajeGlobal = jObject.getString("message");
+                    }
+                    br.close();
+
+                } else {
+                    validar = "false";
+                    mensajeGlobal = conn.getResponseMessage();
+                }
+                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                Log.i("MSG", conn.getResponseMessage());
+                conn.disconnect();
+            }catch ( Exception e)
+            {
+                validar="false";
+                mensajeGlobal="Error:"+e.getMessage();
+            }
+
+
+            /*
+
+            try {
+                HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+                HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+                HttpClient cliente = new DefaultHttpClient(httpParameters);
+                HttpGet htpoget = new HttpGet(URL+"insert_comren_coment/"+folio+"/"+posicion+"/"+comentario);
+                org.apache.http.HttpResponse resx = cliente.execute(htpoget);
+                BufferedReader bfr = new BufferedReader(new InputStreamReader(resx.getEntity().getContent()));
+                StringBuffer stb = new StringBuffer("");
+                String linea="";
+                StringBuffer res = new StringBuffer();
+                while ((linea =bfr.readLine())!=null)
+                {
+                    res.append(linea);
+                    validar="OK";
+                }
+                String finalJSON = res.toString();
+                JSONObject jObject = new JSONObject(finalJSON); //Obtenemos el JSON global
+                if(jObject.getBoolean("success")==true)
+                {
+                    validar="OK";
+                    mensajeGlobal=""+jObject.getString("message");
+                }
+                else
+                {
+                    validar="false";
+                    mensajeGlobal=jObject.getString("message");
+                }
+                bfr.close();
+            }
+            catch (Exception e)
+            {
+                validar="false";
+                mensajeGlobal="Error:"+e.getMessage();
+            }
+
+            */
+
+            return validar;
+
+        }
+        protected void onProgressUpdate(Integer... i)
+        {
+            progreso.setProgress(i[0]);
+        }
+        protected void onPostExecute(String s)
+        {
+            //progreso.dismiss();
+            if(s.equalsIgnoreCase("OK"))
+            {
+                //mensajes("se inserto comentario");
+                consultasBD.cambiarEstatusComentario("G",idComentario,contexto);
+            }
+            else
+            {
+                consultasBD.cambiarEstatusComentario("A",idComentario,contexto);
+                if(s.equalsIgnoreCase("false"))
+                {
+                    //mensajes(mensajeGlobal);
+                }
+                else
+                {
+                    //mensajes(mensajeGlobal);
+                }
+            }
+            consultasBD.verificarComentarios(tv_folio.getText().toString(),contexto);
+            actualizarVistaInfo();
+            super.onPostExecute(s);
+        }
+    }
     public static Double formatearDecimales(Double numero, Integer numeroDecimales) {
         return Math.round(numero * Math.pow(10, numeroDecimales)) / Math.pow(10, numeroDecimales);
     }
@@ -1477,6 +1645,7 @@ public class FragmentInicial extends Fragment {
                 Log.i("guardando","modifcarpreviocomdoc con exito");
                 consultasBD.cambiarDocComdoc("TRUE",folio,contexto);
                 actualizarVistaInfo();
+
             }
             else
             {
@@ -1554,6 +1723,15 @@ public class FragmentInicial extends Fragment {
         {
             iv_comen.setImageResource(R.drawable.ic_incompleto);
         }
+        //trabajando
+        consultasBD.verificarCompleto(tv_folio.getText().toString(),contexto);
+        if(consultasBD.getCompleto(contexto)==true)
+        {
+            Log.i("actual","completo");
+            tv_fol_dialog.setText(""+getFolioOC());
+            //task.cancel(true);
+        }
+
 
 
 
@@ -2180,7 +2358,7 @@ public class FragmentInicial extends Fragment {
             if(fila.moveToFirst())
             {
                 do{
-                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    Log.i("consultafolioOC"," | "+fila.getString(0)
                     );
                     alm=fila.getString(0);
                 }while (fila.moveToNext());
@@ -2519,7 +2697,8 @@ public class FragmentInicial extends Fragment {
                 .setCancelable(false)
                 .setView(v)
                 .create();
-
+        tv_fol_dialog=v.findViewById(R.id.tv_fol_dialog);
+        tv_fol_dialog.setText("0000");
         //imageview dialog
         iv_mp1=v.findViewById(R.id.iv_mp1);
         iv_mp2=v.findViewById(R.id.iv_mp2);
@@ -2541,6 +2720,8 @@ public class FragmentInicial extends Fragment {
                 {
                     insertandoMovimiento();
                 }
+                actualizarVistaInfo();
+                vistaBotones();
 
             }
         });
@@ -2569,15 +2750,14 @@ public class FragmentInicial extends Fragment {
                 {
                     mensajes("No se a guardado completamente");
                 }
-
-
-
+                actualizarVistaInfo();
+                vistaBotones();
             }
         });
         dialog.show();
 
         Log.i("thread","antes");
-      new myUpdateAsyncTask(contexto).execute();
+
     }
     private class myUpdateAsyncTask extends AsyncTask<Intent, Integer, Boolean> {
 
@@ -2629,6 +2809,11 @@ public class FragmentInicial extends Fragment {
                 progreso.dismiss();
                 consultasBD.verificarCompleto(tv_folio.getText().toString(),contexto);
                 vistaBotones();
+                //trabajando
+                if(consultasBD.getCompleto(contexto)==true)
+                {
+                    tv_fol_dialog.setText(""+getFolioOC());
+                }
                 Log.i("thread","espero 21 segundos");
             }
         }
@@ -2685,7 +2870,7 @@ public class FragmentInicial extends Fragment {
             aclacarion=false;
             if(consultasBD.getMod_comdoc(contexto)==false)
             {
-                new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
+                new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"S");
             }
             if(consultasBD.getCrear_comren(contexto)==false)
             {
@@ -2710,7 +2895,10 @@ public class FragmentInicial extends Fragment {
             //enviarAclaracion("3");
 
         }
+       //task=(myUpdateAsyncTask) new myUpdateAsyncTask(contexto).execute();
+        new myUpdateAsyncTask(contexto).execute();
     }
+
     class insertarAclaracion extends AsyncTask<String,Integer,String>
     {
         String validar;
@@ -2772,7 +2960,8 @@ public class FragmentInicial extends Fragment {
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("Accept","application/json");
-                conn.setConnectTimeout(10000);
+                conn.setConnectTimeout(timeoutConnection);
+                conn.setReadTimeout(timeoutSocket);
                 conn.setDoOutput(true);
                 conn.setDoInput(true);
                 conn.connect();
