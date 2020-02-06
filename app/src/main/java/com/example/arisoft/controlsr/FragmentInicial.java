@@ -206,8 +206,16 @@ public class FragmentInicial extends Fragment {
                                 public void onClick(DialogInterface dialog, int which) {
                                     //trabajando
                                     //new modificarBackorderJson().execute();
-                                    
-                                    procesandoOrden();
+                                    //new soloConsultaFolio().execute(getFolioOC(),almacenSeleccionado());
+                                    if(consultasBD.getCrear_comren(contexto)==false)
+                                    {
+                                        new soloConsultaFolio().execute(getFolioOC(),almacenSeleccionado());
+                                    }
+                                    else
+                                    {
+                                        procesandoOrden();
+                                    }
+
 
                                     /*
                                     if(consultasBD.getCompleto(contexto)==true && consultasBD.getEnvioAclaracion(contexto)==false )
@@ -3012,9 +3020,10 @@ public class FragmentInicial extends Fragment {
             if(s.equalsIgnoreCase("OK"))
             {
                 //consultatabla();
-                mensajes(mensajeGlobal);
+                //mensajes(mensajeGlobal);
                 //consultasBD.mensajes("prueba",contexto);
                 //procesando();
+                procesandoOrden();
             }
             else
             {
