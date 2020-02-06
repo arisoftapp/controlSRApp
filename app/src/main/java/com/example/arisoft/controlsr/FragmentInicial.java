@@ -892,6 +892,130 @@ public class FragmentInicial extends Fragment {
         }
     }
 
+    class modificarPrevioJson extends AsyncTask<String,Integer,String>
+    {
+        String validar;
+        private ProgressDialog progreso;
+
+        @Override
+        protected void onPreExecute()
+        {
+            progreso = new ProgressDialog(getContext());
+            progreso.setMessage("Creando Orden");
+            progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            progreso.setCancelable(false);
+            //progreso.show();
+            super.onPreExecute();
+        }
+        @Override
+        protected String doInBackground(String... params)
+        {
+            Log.i("CREARORDEN","prueba");
+
+            try{
+                java.net.URL url = new URL(URL+"modificar_previo_json");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("Accept", "application/json");
+                /*
+                conn.setConnectTimeout(timeoutConnection);//10 segundos espera
+                conn.setReadTimeout(timeoutSocket);
+
+                 */
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
+                conn.connect();
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                os.writeBytes(crearJson.crearJsonPrevio(tv_folio.getText().toString(),contexto).toString());
+                os.flush();
+                os.close();
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line + "\n");
+                }
+
+                int status = conn.getResponseCode();
+                Log.i("CREARORDEN","entro"+status);
+                if (status <= 500) {
+                    validar = "OK";
+                    String finalJSON = sb.toString();
+                    JSONObject jObject = new JSONObject(finalJSON); //Obtenemos el JSON global
+                    Log.i("CREARORDEN",""+jObject.getBoolean("success"));
+                    if (jObject.getBoolean("success") == true) {
+                        validar = "OK";
+                        mensajeGlobal = "" + jObject.getString("message");
+                    } else {
+                        validar = "false";
+                        mensajeGlobal = jObject.getString("message");
+                    }
+                    br.close();
+
+                } else {
+                    validar = "false";
+                    mensajeGlobal = conn.getResponseMessage();
+                }
+                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                Log.i("MSG", conn.getResponseMessage());
+                conn.disconnect();
+            }catch ( Exception e)
+            {
+                validar="false";
+                mensajeGlobal="Error:"+e.getMessage();
+            }
+
+
+            return validar;
+
+        }
+        protected void onProgressUpdate(Integer... i)
+        {
+            progreso.setProgress(i[0]);
+        }
+        protected void onPostExecute(String s)
+        {
+            consultasBD.cambiarDocComren("true",tv_folio.getText().toString(),contexto);
+            //progreso.dismiss();
+            if(surtidoParcial()==true)
+            {
+                //InsertarMacropro
+                new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
+                //enviarAclaracion("1");
+
+            }
+            else
+            {
+                aclacarion=false;
+                new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"S");
+                //enviarAclaracion("3");
+            }
+            /*
+            if(s.equalsIgnoreCase("OK"))
+            {
+                //mensajes("se creo orden");
+                //consultasBD.cambiarEstatusComentarios("true",tv_folio.getText().toString(),contexto);
+                //new modificarBackorderJson().execute();
+                //trabajando
+            }
+            else
+            {
+                //consultasBD.cambiarEstatusComentarios("false",tv_folio.getText().toString(),contexto);
+                if(s.equalsIgnoreCase("false"))
+                {
+                   // mensajes(mensajeGlobal);
+                }
+                else
+                {
+                    //mensajes(mensajeGlobal);
+                }
+            }
+
+             */
+            super.onPostExecute(s);
+        }
+    }
     class crearComentarioOCJSON extends AsyncTask<String,Integer,String>
     {
         String validar;
@@ -1881,7 +2005,7 @@ public class FragmentInicial extends Fragment {
         protected void onPreExecute()
         {
             progreso = new ProgressDialog(getContext());
-            progreso.setMessage("Modificando previo");
+            progreso.setMessage("Cargando...");
             progreso.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progreso.setCancelable(false);
            // progreso.setMax(100);
@@ -1895,8 +2019,8 @@ public class FragmentInicial extends Fragment {
             folio=params[0];
             String almacen=params[1],estatus=params[2];
             try {
-                HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-                HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+                HttpConnectionParams.setConnectionTimeout(httpParameters, 180000);
+                HttpConnectionParams.setSoTimeout(httpParameters, 180000);
                 HttpClient cliente = new DefaultHttpClient(httpParameters);
                 //HttpGet htpoget = new HttpGet(URL+"consulta_previo/"+folio+"/"+almacen);
                 HttpPut httpPut=new HttpPut(URL+"modificar_previo_comdoc/"+folio+"/"+almacen+"/"+getUdsSurt()+"/"+estatus);
@@ -1939,6 +2063,21 @@ public class FragmentInicial extends Fragment {
         protected void onPostExecute(String s)
         {
             progreso.dismiss();
+            consultasBD.cambiarDocComdoc("true",tv_folio.getText().toString(),contexto);
+            if(surtidoParcial()==true)
+            {
+                //InsertarMacropro
+                aclacarion=true;
+                enviarAclaracion("1");
+
+            }
+            else
+            {
+                aclacarion=false;
+                enviarAclaracion("3");
+
+            }
+            /*
             if(s.equalsIgnoreCase("OK"))
             {
                 mensajes(mensajeGlobal);
@@ -1959,6 +2098,8 @@ public class FragmentInicial extends Fragment {
                     mensajes(mensajeGlobal);
                 }
             }
+
+             */
             super.onPostExecute(s);
         }
     }
@@ -2232,20 +2373,50 @@ public class FragmentInicial extends Fragment {
                    .setPositiveButton("continuar", new DialogInterface.OnClickListener() {
                        @Override
                        public void onClick(DialogInterface dialog, int which) {
-                           //trabajando
-                           if(surtidoParcial()==true)
-                           {
-                               //InsertarMacropro
-                               aclacarion=true;
-                               enviarAclaracion("1");
 
+                           if(consultasBD.getMod_comren(contexto)==false)
+                           {
+                               new modificarPrevioJson().execute();
                            }
                            else
                            {
-                               aclacarion=false;
-                               enviarAclaracion("3");
+                               if(consultasBD.getMod_comdoc(contexto)==false)
+                               {
+                                   //modificarPrevioComdoc
+                                   if(surtidoParcial()==true)
+                                   {
+                                       //InsertarMacropro
+                                       aclacarion=true;
+                                       new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"A");
 
+
+                                   }
+                                   else
+                                   {
+                                       aclacarion=false;
+                                       new modificarPrevioComdoc().execute(tv_folio.getText().toString().trim(),almacenSeleccionado(),"S");
+
+                                   }
+                               }
+                               else
+                               {
+                                   if(surtidoParcial()==true)
+                                   {
+                                       //InsertarMacropro
+                                       aclacarion=true;
+                                       enviarAclaracion("1");
+
+                                   }
+                                   else
+                                   {
+                                       aclacarion=false;
+                                       enviarAclaracion("3");
+
+                                   }
+                               }
                            }
+                           //trabajando
+
                        }
                    })
 

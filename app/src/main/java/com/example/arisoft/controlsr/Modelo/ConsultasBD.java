@@ -27,6 +27,20 @@ public class ConsultasBD {
             Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+    public void cambiarDocComren(String estatus,String folio, Context contexto)
+    {
+        try{
+            Database admin=new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            ContentValues r = new ContentValues();
+            r.put("mod_comren",estatus);
+            db.update("documento",r, "folio_previo='"+ folio +"' ",null);
+            db.close();
+        }catch (SQLiteException e)
+        {
+            Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
     public void cambiarEstatusComren(String estatus,String folio, Context contexto)
     {
         try{

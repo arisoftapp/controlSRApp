@@ -1,18 +1,22 @@
 1-btn_guardar
 soloConsultaFolio
 2-procesandoOrden
-    3-crearOrdenJSON
-    4-crearComentarioOCJSON
-    5-modificarBackorderJson
-    6-obtenerDatosComdoc
-        7-crearComdoc
-        8-dialogOrdenCompleta
-            9-enviarAclaracion
-                -insertarAclaracion
-                -insertarArticulosAclaracion
-                    -aumentarFolio
-                    -quitarDatos
-            10-procesandoOrden
+    2.1-crearOrdenJSON
+    2.2-crearComentarioOCJSON
+    2.3-modificarBackorderJson
+    2.4-obtenerDatosComdoc
+        2.4.1-crearComdoc
+        2.4.2-dialogOrdenCompleta
+            2.4.2.1-modificarPrevioJson
+            2.4.2.2-modificarPrevioComdoc
+                2.4.2.2.1-enviarAclaracion
+                    2.4.2.2.1.1-insertarAclaracion
+                    2.4.2.2.1.2-insertarArticulosAclaracion
+                        2.4.2.2.1.2.1-aumentarFolio
+                        2.4.2.2.1.2.2-quitarDatos
+            2-procesandoOrden
+
+
 
 //faltan
 modificarPrevioComdoc

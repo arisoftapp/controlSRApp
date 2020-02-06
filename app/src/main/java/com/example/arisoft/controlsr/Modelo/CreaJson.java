@@ -189,6 +189,50 @@ public class CreaJson {
         }
         return jsonCrearOrden;
     }
+    public JSONObject crearJsonPrevio(String folio_previo,Context contexto)
+    {
+
+        JSONArray jsonArrayArt = new JSONArray();
+        JSONObject jsonCrearOrden= new JSONObject();
+        JSONObject jsonArt;
+        String articulo,cantidad;
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT codigo,surtido FROM articulos WHERE surtidoaux!=surtido",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    articulo=fila.getString(0);
+                    cantidad=fila.getString(1);
+
+                    //creando json articulos
+
+                    jsonArt=new JSONObject();
+                    jsonArt.put("articulo",articulo);
+                    jsonArt.put("cantidad",cantidad);
+                    jsonArrayArt.put(jsonArt);
+
+                    Log.i("creajsonoc","-------------------------------------------------------------------------");
+                    Log.i("creajsonoc",articulo+"|"+cantidad+"|"+folio_previo+"|"+fila.getCount());
+                    Log.i("creajsonoc","-------------------------------------------------------------------------");
+                }while (fila.moveToNext());
+            }
+            db.close();
+            jsonCrearOrden.put("almacen",folio_previo);
+            jsonCrearOrden.put("articulos",jsonArrayArt);
+
+//            Log.i("creajsonoc",jsonCrearOrden.getString("folio_orden"));
+            //Log.i("creajsonoc",jsonCrearOrden.getString("articulos"));
+
+        }catch (SQLiteException e)
+        {
+            mensajes("Error al consultar codigo:"+e.getMessage(),contexto);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return jsonCrearOrden;
+    }
     public void mensajes(String mensaje,Context contexto) {
         Toast.makeText(contexto,mensaje,Toast.LENGTH_SHORT).show();
     }
