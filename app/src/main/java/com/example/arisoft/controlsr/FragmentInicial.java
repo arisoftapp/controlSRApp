@@ -206,6 +206,7 @@ public class FragmentInicial extends Fragment {
                                 public void onClick(DialogInterface dialog, int which) {
                                     //trabajando
                                     //new modificarBackorderJson().execute();
+                                    
                                     procesandoOrden();
 
                                     /*
@@ -1531,8 +1532,11 @@ public class FragmentInicial extends Fragment {
         {
             String folio=params[0],almacen=params[1];
             try {
-                HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
-                HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
+
+                HttpConnectionParams.setConnectionTimeout(httpParameters, 180000);
+                HttpConnectionParams.setSoTimeout(httpParameters, 180000);
+
+
                 HttpClient cliente = new DefaultHttpClient(httpParameters);
                 HttpGet htpoget = new HttpGet(URL+"consulta_previo/"+folio+"/"+almacen);
                 org.apache.http.HttpResponse resx = cliente.execute(htpoget);
