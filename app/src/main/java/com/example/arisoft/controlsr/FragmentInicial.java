@@ -205,41 +205,8 @@ public class FragmentInicial extends Fragment {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     //trabajando
-                                    if(consultasBD.getCrear_comren(contexto)==false && consultasBD.getCrear_comdoc(contexto)==false && consultasBD.getComent_completos(contexto))
-                                    {
-                                        new crearOrdenJSON().execute();
-                                    }
-                                    else
-                                    {
-                                        if(consultasBD.getCrear_comdoc(contexto)==false)
-                                        {
-                                            new crearComentarioOCJSON().execute();
-                                        }
-                                        else
-                                        {
-                                            if(consultasBD.getMod_back(contexto)==false)
-                                            {
-                                                new modificarBackorderJson().execute();
-                                            }
-                                            else
-                                            {
-                                                if(consultasBD.getComent_completos(contexto)==false)
-                                                {
-                                                    obtenerDatosComdoc();
-                                                }
-                                                else
-                                                {
-                                                    dialogOrdenCompleta();
-                                                    //mensajes("orden creada");
-                                                }
-                                            }
-
-
-
-                                        }
-
-
-                                    }
+                                    //new modificarBackorderJson().execute();
+                                    procesandoOrden();
 
                                     /*
                                     if(consultasBD.getCompleto(contexto)==true && consultasBD.getEnvioAclaracion(contexto)==false )
@@ -484,6 +451,45 @@ public class FragmentInicial extends Fragment {
 
 
         return v;
+    }
+    public void procesandoOrden()
+    {
+
+        if(consultasBD.getCrear_comren(contexto)==false)
+        {
+            new crearOrdenJSON().execute();
+        }
+        else
+        {
+            if(consultasBD.getCrear_comdoc(contexto)==false)
+            {
+                new crearComentarioOCJSON().execute();
+            }
+            else
+            {
+                if(consultasBD.getMod_back(contexto)==false)
+                {
+                    new modificarBackorderJson().execute();
+                }
+                else
+                {
+                    if(consultasBD.getComent_completos(contexto)==false)
+                    {
+                        obtenerDatosComdoc();
+                    }
+                    else
+                    {
+                        dialogOrdenCompleta();
+                        //mensajes("orden creada");
+                    }
+                }
+
+
+
+            }
+
+
+        }
     }
     public float calcularDescuento()
     {
@@ -2206,23 +2212,56 @@ public class FragmentInicial extends Fragment {
     }
     public void dialogOrdenCompleta()
     {
-        AlertDialog dialog = new AlertDialog.Builder(FragmentInicial.this.getContext())
-                .setTitle("ORDEN DE COMPRA")
-                .setMessage("Se creo orden de compra con el folio: "+getFolioOC())
-                .setPositiveButton("continuar", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
+       if(consultasBD.getCrear_comren(contexto)==true && consultasBD.getCrear_comdoc(contexto)==true && consultasBD.getComent_completos(contexto)==true && consultasBD.getMod_back(contexto)==true)
+       {
+           AlertDialog dialog = new AlertDialog.Builder(FragmentInicial.this.getContext())
+                   .setTitle("ORDEN DE COMPRA")
+                   .setMessage("Se creo orden de compra con el folio: "+getFolioOC())
+                   .setPositiveButton("continuar", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialog, int which) {
+                           //trabajando
+                           if(surtidoParcial()==true)
+                           {
+                               //InsertarMacropro
+                               aclacarion=true;
+                               enviarAclaracion("1");
 
-                    }
-                })
-                .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
+                           }
+                           else
+                           {
+                               aclacarion=false;
+                               enviarAclaracion("3");
 
-                    }
-                })
-                .create();
-        dialog.show();
+                           }
+                       }
+                   })
+
+                   .create();
+           dialog.show();
+       }
+       else
+       {
+           AlertDialog dialog = new AlertDialog.Builder(FragmentInicial.this.getContext())
+                   .setTitle("ORDEN DE COMPRA")
+                   .setMessage("Re-enviar orden")
+                   .setPositiveButton("continuar", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialog, int which) {
+
+                       }
+                   })
+                   .setNegativeButton("cancelar", new DialogInterface.OnClickListener() {
+                       @Override
+                       public void onClick(DialogInterface dialogInterface, int i) {
+
+                       }
+                   })
+                   .create();
+           dialog.show();
+       }
+
+
     }
     class crearComren extends AsyncTask<String,Integer,String>
     {

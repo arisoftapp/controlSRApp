@@ -1,0 +1,19 @@
+1-btn_guardar
+2-procesandoOrden
+    3-crearOrdenJSON
+    4-crearComentarioOCJSON
+    5-modificarBackorderJson
+    6-obtenerDatosComdoc
+        7-crearComdoc
+        8-dialogOrdenCompleta
+            9-enviarAclaracion
+                -insertarAclaracion
+                -insertarArticulosAclaracion
+                    -aumentarFolio
+                    -quitarDatos
+            10-procesandoOrden
+
+//faltan
+modificarPrevioComdoc
+modificarComren
+    modificarPrevioComren

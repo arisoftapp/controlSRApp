@@ -176,7 +176,7 @@ public class CreaJson {
             }
             db.close();
             jsonCrearOrden.put("almacen",almacen);
-            jsonCrearOrden.put("comentarios",jsonArrayArt);
+            jsonCrearOrden.put("articulos",jsonArrayArt);
 
 //            Log.i("creajsonoc",jsonCrearOrden.getString("folio_orden"));
             //Log.i("creajsonoc",jsonCrearOrden.getString("articulos"));
