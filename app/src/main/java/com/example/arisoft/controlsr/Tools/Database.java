@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class Database extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "ControlSR";
-    public static final int DATABASE_VERSION = 5;
+    public static final int DATABASE_VERSION = 6;
     public Database(Context context, SQLiteDatabase.CursorFactory factory,int version) {
         super(context, DATABASE_NAME, factory, DATABASE_VERSION);
     }
@@ -49,7 +49,15 @@ public class Database extends SQLiteOpenHelper {
             "descuento4 text," +
             "descuento5 text," +
             "tipocambio text," +
-            "backorder text)";//por articulo true/false
+            "backorder text," +//por articulo true/false
+            "factor text," +//datos extras
+            "clasificacion text," +//datos extras
+            "proveedor text," +//datos extras
+            "imp1 text," +//datos extras
+            "imp2 text," +//datos extras
+            "imp1_tab text," +//datos extras
+            "imp2_tab text," +//datos extras
+            "cantbackorder text)";//cantidad backorder sirve para modificarla restandole la cantidad
     public static final String SQL_DOC="CREATE TABLE "+TABLA_DOC+"(folio_previo text ," +
             "fecha text," +
             "almacen text," +
@@ -123,6 +131,18 @@ public class Database extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE documento ADD COLUMN coment_completos text ");
 
         }
+        if(oldVersion<=4 && newVersion>5)
+        {
+            db.execSQL("ALTER TABLE articulos ADD COLUMN factor TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN clasificacion TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN proveedor TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN imp1 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN imp2 TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN imp1_tab TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN imp2_tab TEXT");
+            db.execSQL("ALTER TABLE articulos ADD COLUMN cantbackorder TEXT");
+        }
+
 
     }
 

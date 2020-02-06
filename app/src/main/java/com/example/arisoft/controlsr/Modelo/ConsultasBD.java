@@ -27,6 +27,48 @@ public class ConsultasBD {
             Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
+    public void cambiarEstatusComren(String estatus,String folio, Context contexto)
+    {
+        try{
+            Database admin=new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            ContentValues r = new ContentValues();
+            r.put("crear_conren",estatus);
+            db.update("documento",r, "folio_previo='"+ folio +"' ",null);
+            db.close();
+        }catch (SQLiteException e)
+        {
+            Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    public void cambiarEstatusComentarios(String estatus,String folio, Context contexto)
+    {
+        try{
+            Database admin=new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            ContentValues r = new ContentValues();
+            r.put("coment_completos",estatus);
+            db.update("documento",r, "folio_previo='"+ folio +"' ",null);
+            db.close();
+        }catch (SQLiteException e)
+        {
+            Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    public void cambiarEstatusBackorder(String estatus,String folio, Context contexto)
+    {
+        try{
+            Database admin=new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            ContentValues r = new ContentValues();
+            r.put("mod_back",estatus);
+            db.update("documento",r, "folio_previo='"+ folio +"' ",null);
+            db.close();
+        }catch (SQLiteException e)
+        {
+            Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
     public void crearDocComdoc(String estatus,String folio, Context contexto)
     {
         try{
@@ -41,7 +83,7 @@ public class ConsultasBD {
             Toast.makeText(contexto, "Error:"+e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
-    public void posComtDoc(int posicion,String folio, Context contexto)
+    public void setPosicionComentarios(int posicion,String folio, Context contexto)
     {
         try{
             Database admin=new Database(contexto,null,1);
@@ -602,6 +644,37 @@ public class ConsultasBD {
         }
         return resultado;
     }
+
+    public String getAlmacenSeleccionado(Context contexto)
+    {
+        String alm="";
+        try{
+            Database admin = new Database(contexto,null,1);
+            SQLiteDatabase db = admin.getWritableDatabase();
+            Cursor fila = db.rawQuery("SELECT almacen FROM login",null);
+            if(fila.moveToFirst())
+            {
+                do{
+                    Log.i("consultaAlmacen"," | "+fila.getString(0)
+                    );
+                    alm=fila.getString(0);
+                }while (fila.moveToNext());
+            }
+            else
+            {
+                alm="sin almacen seleccionado";
+            }
+            db.close();
+        }catch (Exception e)
+        {
+            Log.e("Error:",""+e.getMessage());
+            alm="";
+            //mensajes("Error al validar login:"+e.getMessage());
+        }
+
+        return alm;
+    }
+
 
 
 }
