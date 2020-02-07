@@ -219,7 +219,7 @@ public class CreaJson {
                 }while (fila.moveToNext());
             }
             db.close();
-            jsonCrearOrden.put("almacen",folio_previo);
+            jsonCrearOrden.put("folio_previo",folio_previo);
             jsonCrearOrden.put("articulos",jsonArrayArt);
 
 //            Log.i("creajsonoc",jsonCrearOrden.getString("folio_orden"));
