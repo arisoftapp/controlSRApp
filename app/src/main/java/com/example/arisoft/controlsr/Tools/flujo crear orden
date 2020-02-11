@@ -22,3 +22,9 @@ soloConsultaFolio
 modificarPrevioComdoc
 modificarComren
     modificarPrevioComren
+
+
+    //calculos
+    calcularDescuento
+    getIva
+    getSumatotal

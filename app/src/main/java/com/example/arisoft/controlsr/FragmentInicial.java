@@ -30,6 +30,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.arisoft.controlsr.Modelo.Calculos;
 import com.example.arisoft.controlsr.Modelo.ConsultasBD;
 import com.example.arisoft.controlsr.Modelo.CreaJson;
 import com.example.arisoft.controlsr.Modelo.Recibido;
@@ -91,6 +92,7 @@ public class FragmentInicial extends Fragment {
     Context contexto;
     ConsultasBD consultasBD;
     CreaJson crearJson;
+    Calculos calculos;
 
 
 
@@ -128,6 +130,7 @@ public class FragmentInicial extends Fragment {
         contexto=getContext();
         consultasBD=new ConsultasBD();
         crearJson=new CreaJson();
+        calculos=new Calculos();
 
         if(tablaVacia("articulos","codigo")==false)
         {
@@ -191,6 +194,13 @@ public class FragmentInicial extends Fragment {
             @Override
             public void onClick(View view) {
                 //calcularDescuento();
+
+                //mensajes("iva "+calculos.getIva(contexto));
+                //mensajes("subtotal "+calculos.getSumatotal(contexto));
+                //mensajes("descuento "+calculos.calcularDescuento(contexto));
+                //mensajes("total "+calculos.getTotal(contexto));
+
+
                 //mensajes("guardar");
 
                 if(existenCambios()==false)
@@ -216,45 +226,14 @@ public class FragmentInicial extends Fragment {
                                         procesandoOrden();
                                     }
 
-
-                                    /*
-                                    if(consultasBD.getCompleto(contexto)==true && consultasBD.getEnvioAclaracion(contexto)==false )
-                                    {
-                                        if(surtidoParcial()==true)
-                                        {
-                                            //InsertarMacropro
-                                            aclacarion=true;
-                                            enviarAclaracion("1");
-
-                                        }
-                                        else
-                                        {
-                                            aclacarion=false;
-                                            enviarAclaracion("3");
-
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if(consultasBD.getCompleto(contexto)==false && consultasBD.getEnvioAclaracion(contexto)==false)
-                                        {
-                                            new soloConsultaFolio().execute(getFolioOC(),almacenSeleccionado());
-                                        }
-                                        else
-                                        {
-
-                                        }
-                                    }
-
-                                     */
-
-
                                 }
                             })
                             .setNegativeButton("Cancelar", null)
                             .create();
                     dialog.show();
                 }
+
+
             }
         });
 
@@ -470,7 +449,7 @@ public class FragmentInicial extends Fragment {
         }
         else
         {
-            if(consultasBD.getCrear_comdoc(contexto)==false)
+            if(consultasBD.getComent_completos(contexto)==false)
             {
                 new crearComentarioOCJSON().execute();
             }
@@ -673,21 +652,23 @@ public class FragmentInicial extends Fragment {
     }
     public void obtenerDatosComdoc()
     {
-        String folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total;
+        String folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total,descuento;
         Float totalf;
         folio_previo=tv_folio.getText().toString();
         almacen=tv_almacen.getText().toString();
         folio_orden=getFolioOC();
         totalreg=getTotalreg();
         totaluds=getTotaluds();
-        sumatotal=""+formatearDecimales(Double.parseDouble(getSumatotal()),2);
-        iva=""+formatearDecimales(Double.parseDouble(getIva()),2);
-        totalf=Float.parseFloat(sumatotal)+Float.parseFloat(iva);
-        total=""+totalf;
-        total=""+formatearDecimales(Double.parseDouble(total),2);
+        //sumatotal=""+formatearDecimales(Double.parseDouble(getSumatotal()),2);
+        sumatotal=""+calculos.getSumatotal(contexto);
+        iva=""+calculos.getIva(contexto);
+        //totalf=Float.parseFloat(sumatotal)+Float.parseFloat(iva);
+        total=""+calculos.getTotal(contexto);
+        descuento=""+calculos.calcularDescuento(contexto);
+        //total=""+formatearDecimales(Double.parseDouble(total),2);
         //mensajes(folio_previo+"|"+almacen+"|"+folio_orden+"|"+totalreg+"|"+totaluds+"|"+sumatotal);
         Log.i("obtenerdatoscomdocs",folio_previo+"|"+almacen+"|"+folio_orden+"|"+totalreg+"|"+totaluds+"|"+sumatotal+"|"+iva+"|"+total);
-        new crearComdoc().execute(folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total,""+calcularDescuento());
+        new crearComdoc().execute(folio_previo,almacen,folio_orden,totalreg,totaluds,sumatotal,iva,total,""+descuento);
 
     }
     public void modificarBackorder()
@@ -2431,6 +2412,7 @@ public class FragmentInicial extends Fragment {
                    .setPositiveButton("continuar", new DialogInterface.OnClickListener() {
                        @Override
                        public void onClick(DialogInterface dialog, int which) {
+                           procesandoOrden();
 
                        }
                    })
