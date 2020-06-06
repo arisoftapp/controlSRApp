@@ -59,14 +59,19 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.channels.FileLock;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 
@@ -442,7 +447,9 @@ public class FragmentInicial extends Fragment {
     }
     public void procesandoOrden()
     {
+        //crearJson.crearJsonOC(getFolioOC(),contexto).toString();
 
+        Log.i("------------", crearJson.crearJsonOC(getFolioOC(),contexto).toString());
         if(consultasBD.getCrear_comren(contexto)==false)
         {
             new crearOrdenJSON().execute();
@@ -478,6 +485,7 @@ public class FragmentInicial extends Fragment {
 
 
         }
+
     }
     public float calcularDescuento()
     {
@@ -1123,27 +1131,25 @@ public class FragmentInicial extends Fragment {
         @Override
         protected String doInBackground(String... params)
         {
-            Log.i("CREARORDEN","prueba");
+
 
             try{
                 java.net.URL url = new URL(URL+"crear_orden");
+                JSONObject jsonArt = new JSONObject();
+                //jsonArt.put("articulos", "PI¥A");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setRequestProperty("Accept", "application/json");
-                /*
-                conn.setConnectTimeout(timeoutConnection);//10 segundos espera
-                conn.setReadTimeout(timeoutSocket);
-
-                 */
+                conn.setRequestProperty("Content-Type","application/json");
                 conn.setDoOutput(true);
                 conn.setDoInput(true);
                 conn.connect();
-                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                os.writeBytes(crearJson.crearJsonOC(getFolioOC(),contexto).toString());
-                os.flush();
-                os.close();
-                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream(), "UTF-8"));
+                bw.write(crearJson.crearJsonOC(getFolioOC(),contexto).toString());
+                bw.flush();
+                bw.close();
+
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(),"UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = br.readLine()) != null) {
@@ -1190,6 +1196,7 @@ public class FragmentInicial extends Fragment {
         protected void onPostExecute(String s)
         {
             progreso.dismiss();
+
             if(s.equalsIgnoreCase("OK"))
             {
                 //mensajes("se creo orden");
@@ -1209,8 +1216,28 @@ public class FragmentInicial extends Fragment {
                     mensajes(mensajeGlobal);
                 }
             }
+
+
             super.onPostExecute(s);
         }
+    }
+    private static String encodeParams(JSONObject params) throws Exception {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+        Iterator<String> itr = params.keys();
+        while(itr.hasNext()){
+            String key= itr.next();
+            Object value = params.get(key);
+            if (first)
+                first = false;
+            else
+                result.append("&");
+
+            result.append(URLEncoder.encode(key, "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(value.toString(), "UTF-8"));
+        }
+        return result.toString();
     }
     class insertarComentariosOCJson extends AsyncTask<String,Integer,String>
     {

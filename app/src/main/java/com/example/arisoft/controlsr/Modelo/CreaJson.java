@@ -13,6 +13,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 public class CreaJson {
     ConsultasBD consultasBD=new ConsultasBD();
     public JSONObject crearJsonOC(String folioOC,Context contexto)
@@ -54,6 +57,11 @@ public class CreaJson {
                     folio=fila.getString(17);
                     //creando json articulos
                     jsonArt=new JSONObject();
+                    if(articulo.contains("¥"))
+                    {
+                        //articulo=articulo.replace("¥","Ñ");
+                        Log.i("replace","si entro "+articulo);
+                    }
                     jsonArt.put("articulo",articulo);
                     jsonArt.put("posicion",posicion);
                     jsonArt.put("cantidad",cantidad);
@@ -79,6 +87,7 @@ public class CreaJson {
                     Log.i("creajsonoc",imp1_tab+"|"+imp2_tab+"|"+descuento1+"|"+descuento2+"|"+descuento3+"|"+descuento4);
                     Log.i("creajsonoc",descuento5+"|"+folio);
                     Log.i("creajsonoc","-------------------------------------------------------------------------");
+                    Log.i("creajsonoc",jsonArt+"|");
                 }while (fila.moveToNext());
             }
             db.close();
@@ -86,7 +95,7 @@ public class CreaJson {
             jsonCrearOrden.put("articulos",jsonArrayArt);
 
 //            Log.i("creajsonoc",jsonCrearOrden.getString("folio_orden"));
-            //Log.i("creajsonoc",jsonCrearOrden.getString("articulos"));
+            Log.i("creajsonoc",jsonCrearOrden.getString("articulos"));
 
         }catch (SQLiteException e)
         {
@@ -97,6 +106,7 @@ public class CreaJson {
         consultasBD.setPosicionComentarios(posicion,folio,contexto);
         return jsonCrearOrden;
     }
+
     public JSONObject crearJsonComentariosOC(String folioOC,Context contexto)
     {
 
